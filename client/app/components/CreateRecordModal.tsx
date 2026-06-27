@@ -33,6 +33,20 @@ interface InvoiceFormData {
   email: string;
 }
 
+interface EstimateFormData {
+  estimateNumber: string;
+  estimateDate: string;
+  clientSelection: string;
+  client: string;
+  // EMAIL-ONLY / NON-SHEET — used for the emailing step, never sent to the backend/Sheets.
+  email: string;
+  property: string;
+  projectDescription: string;
+  costToClient: string;
+  approved: string;
+  administrativeNotes: string;
+}
+
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 const INITIAL_FORM: InvoiceFormData = {
@@ -55,21 +69,42 @@ const INITIAL_FORM: InvoiceFormData = {
   email: "",
 };
 
-type Step = "select-type" | "invoice-form" | "review" | "success";
+const INITIAL_ESTIMATE: EstimateFormData = {
+  estimateNumber: "",
+  estimateDate: new Date().toISOString().split("T")[0],
+  clientSelection: "",
+  client: "",
+  email: "",
+  property: "",
+  projectDescription: "",
+  costToClient: "",
+  approved: "Pending",
+  administrativeNotes: "",
+};
+
+type RecordType = "invoice" | "estimate";
+type Step = "select-type" | "invoice-form" | "estimate-form" | "review" | "success";
 
 export default function CreateRecordModal({
   open,
   onClose,
+  onSendWithAgent,
 }: {
   open: boolean;
   onClose: () => void;
+  onSendWithAgent?: () => void;
 }) {
   const [step, setStep] = useState<Step>("select-type");
+  const [recordType, setRecordType] = useState<RecordType>("invoice");
   const [form, setForm] = useState<InvoiceFormData>(INITIAL_FORM);
+  const [estimateForm, setEstimateForm] =
+    useState<EstimateFormData>(INITIAL_ESTIMATE);
 
   function reset() {
     setStep("select-type");
+    setRecordType("invoice");
     setForm(INITIAL_FORM);
+    setEstimateForm(INITIAL_ESTIMATE);
   }
 
   function handleClose() {
@@ -80,14 +115,76 @@ export default function CreateRecordModal({
   const titles: Record<Step, string> = {
     "select-type": "Create New Record",
     "invoice-form": "New Invoice",
-    review: "Review Invoice",
-    success: "Invoice Created",
+    "estimate-form": "New Estimate",
+    review: recordType === "estimate" ? "Review Estimate" : "Review Invoice",
+    success: recordType === "estimate" ? "Estimate Created" : "Invoice Created",
   };
+
+  function getReviewItems(): { label: string; value: string }[] {
+    if (recordType === "estimate") {
+      return [
+        { label: "Estimate #", value: estimateForm.estimateNumber },
+        { label: "Date of Estimate", value: estimateForm.estimateDate },
+        { label: "Client", value: estimateForm.client },
+        { label: "Email", value: estimateForm.email },
+        { label: "Property", value: estimateForm.property },
+        {
+          label: "Project Description",
+          value: estimateForm.projectDescription,
+        },
+        {
+          label: "Cost to Client",
+          value: formatCurrency(estimateForm.costToClient),
+        },
+        { label: "Approved", value: estimateForm.approved },
+        { label: "Admin Notes", value: estimateForm.administrativeNotes },
+      ];
+    }
+    return [
+      { label: "Invoice Date", value: form.invoiceDate },
+      { label: "Date Work Completed", value: form.dateWorkCompleted },
+      { label: "Payment Due", value: form.paymentDue },
+      { label: "Payment Status", value: "PENDING" },
+      { label: "Estimate Reference", value: form.estimateReference },
+      { label: "Invoice #", value: form.invoiceNumber },
+      { label: "Client", value: form.client },
+      { label: "Email", value: form.email },
+      { label: "Property", value: form.property },
+      { label: "Project Description", value: form.projectDescription },
+      {
+        label: "Cost to Client",
+        value: formatCurrency(form.costToClient),
+      },
+      { label: "Labor Expense", value: formatCurrency(form.laborExpense) },
+      {
+        label: "Equipment Expense",
+        value: formatCurrency(form.equipmentExpense),
+      },
+      {
+        label: "Materials Expense",
+        value: formatCurrency(form.materialsExpense),
+      },
+      { label: "Admin Notes", value: form.administrativeNotes },
+      { label: "Completion Status", value: form.completionStatus },
+      ...(form.serviceCategories.length > 0
+        ? [{ label: "Services", value: form.serviceCategories.join(", ") }]
+        : []),
+    ];
+  }
 
   return (
     <Modal open={open} onClose={handleClose} title={titles[step]}>
       {step === "select-type" && (
-        <TypeSelection onSelectInvoice={() => setStep("invoice-form")} />
+        <TypeSelection
+          onSelectInvoice={() => {
+            setRecordType("invoice");
+            setStep("invoice-form");
+          }}
+          onSelectEstimate={() => {
+            setRecordType("estimate");
+            setStep("estimate-form");
+          }}
+        />
       )}
       {step === "invoice-form" && (
         <InvoiceForm
@@ -97,19 +194,48 @@ export default function CreateRecordModal({
           onReview={() => setStep("review")}
         />
       )}
-      {step === "review" && (
-        <ReviewStep
-          form={form}
-          onBack={() => setStep("invoice-form")}
-          onComplete={() => setStep("success")}
+      {step === "estimate-form" && (
+        <EstimateForm
+          form={estimateForm}
+          onChange={setEstimateForm}
+          onBack={() => setStep("select-type")}
+          onReview={() => setStep("review")}
         />
       )}
-      {step === "success" && <SuccessStep onClose={handleClose} />}
+      {step === "review" && (
+        <ReviewStep
+          recordType={recordType}
+          items={getReviewItems()}
+          onBack={() =>
+            setStep(
+              recordType === "estimate" ? "estimate-form" : "invoice-form",
+            )
+          }
+          onComplete={() => setStep("success")}
+          onSendWithAgent={
+            onSendWithAgent
+              ? () => {
+                  handleClose();
+                  onSendWithAgent();
+                }
+              : undefined
+          }
+        />
+      )}
+      {step === "success" && (
+        <SuccessStep recordType={recordType} onClose={handleClose} />
+      )}
     </Modal>
   );
 }
 
-function TypeSelection({ onSelectInvoice }: { onSelectInvoice: () => void }) {
+function TypeSelection({
+  onSelectInvoice,
+  onSelectEstimate,
+}: {
+  onSelectInvoice: () => void;
+  onSelectEstimate: () => void;
+}) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-[15px] leading-[20px] text-[#989898]">
@@ -124,12 +250,11 @@ function TypeSelection({ onSelectInvoice }: { onSelectInvoice: () => void }) {
           <span className="text-[15px] font-medium">Invoice</span>
         </button>
         <button
-          disabled
-          className="flex flex-1 flex-col items-center justify-center gap-3 rounded-[10px] border border-[#313131] bg-[#1e1e1e] px-4 py-6 text-[#989898]/50 opacity-50 cursor-not-allowed"
+          onClick={onSelectEstimate}
+          className="flex flex-1 flex-col items-center justify-center gap-3 rounded-[10px] border border-[#313131] bg-[#1e1e1e] px-4 py-6 text-white transition-colors hover:border-[#7987FF]"
         >
           <FileText className="size-8" />
           <span className="text-[15px] font-medium">Estimate</span>
-          <span className="text-[11px] text-[#989898]">Coming soon</span>
         </button>
       </div>
     </div>
@@ -223,7 +348,7 @@ function InvoiceForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Invoice Date" required>
           <input
             type="date"
@@ -258,7 +383,7 @@ function InvoiceForm({
         </Field>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Estimate Reference">
           <input
             type="text"
@@ -279,7 +404,7 @@ function InvoiceForm({
         </Field>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Client" required>
           <select
             value={form.clientSelection ?? ""}
@@ -349,7 +474,7 @@ function InvoiceForm({
         />
       </Field>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Cost to the Client" required>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-[#989898]">
@@ -427,7 +552,7 @@ function InvoiceForm({
         />
       </Field>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Completion Status">
           <select
             value={form.completionStatus}
@@ -482,6 +607,213 @@ function InvoiceForm({
   );
 }
 
+function EstimateForm({
+  form,
+  onChange,
+  onBack,
+  onReview,
+}: {
+  form: EstimateFormData;
+  onChange: (f: EstimateFormData) => void;
+  onBack: () => void;
+  onReview: () => void;
+}) {
+  const otherClientRef = useRef<HTMLInputElement>(null);
+  const isOther = form.clientSelection === "__other__";
+  const isKnownClient = form.clientSelection !== "" && !isOther;
+
+  useEffect(() => {
+    if (isOther) otherClientRef.current?.focus();
+  }, [isOther]);
+
+  const set = (key: keyof EstimateFormData, value: string) =>
+    onChange({ ...form, [key]: value });
+
+  function handleClientSelection(value: string) {
+    if (value === "__other__") {
+      onChange({ ...form, clientSelection: "__other__", client: "", email: "" });
+    } else if (value === "") {
+      onChange({ ...form, clientSelection: "", client: "", email: "" });
+    } else {
+      const match = KNOWN_CLIENTS.find((c) => c.name === value);
+      onChange({
+        ...form,
+        clientSelection: value,
+        client: value,
+        email: match?.email ?? "",
+      });
+    }
+  }
+
+  const canSubmit =
+    form.estimateNumber &&
+    form.estimateDate &&
+    form.client &&
+    form.projectDescription &&
+    form.costToClient &&
+    form.email &&
+    isValidEmail(form.email);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (canSubmit) onReview();
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field label="Estimate #" required>
+          <input
+            type="text"
+            value={form.estimateNumber}
+            onChange={(e) => set("estimateNumber", e.target.value)}
+            placeholder="e.g. EST-001"
+            className={inputClass}
+            required
+          />
+        </Field>
+        <Field label="Date of Estimate Sent to Client" required>
+          <input
+            type="date"
+            value={form.estimateDate}
+            onChange={(e) => set("estimateDate", e.target.value)}
+            className={inputClass}
+            required
+          />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field label="Client" required>
+          <select
+            value={form.clientSelection ?? ""}
+            onChange={(e) => handleClientSelection(e.target.value)}
+            className={inputClass}
+            required
+          >
+            <option value="" disabled>
+              Select a client…
+            </option>
+            {KNOWN_CLIENTS.map((c) => (
+              <option key={c.name} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+            <option value="__other__">Other (enter manually)</option>
+          </select>
+        </Field>
+        <Field label="Property">
+          <input
+            type="text"
+            value={form.property}
+            onChange={(e) => set("property", e.target.value)}
+            placeholder="e.g. mobile home, house direction"
+            className={inputClass}
+          />
+        </Field>
+      </div>
+
+      {isOther && (
+        <Field label="Client Name" required>
+          <input
+            ref={otherClientRef}
+            type="text"
+            value={form.client}
+            onChange={(e) => set("client", e.target.value)}
+            placeholder="Enter client name"
+            className={inputClass}
+            required
+          />
+        </Field>
+      )}
+
+      <Field label="Email" required>
+        <input
+          type="email"
+          value={form.email ?? ""}
+          onChange={(e) => set("email", e.target.value)}
+          placeholder="client@example.com"
+          readOnly={isKnownClient}
+          className={
+            inputClass +
+            (isKnownClient ? " opacity-60 cursor-not-allowed" : "")
+          }
+          required
+        />
+      </Field>
+
+      <Field label="Project Description" required>
+        <textarea
+          value={form.projectDescription}
+          onChange={(e) => set("projectDescription", e.target.value)}
+          placeholder="Describe the work to be performed..."
+          rows={3}
+          className={inputClass + " resize-none"}
+          required
+        />
+      </Field>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field label="Cost to the Client" required>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-[#989898]">
+              $
+            </span>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={form.costToClient}
+              onChange={(e) => set("costToClient", e.target.value)}
+              placeholder="0.00"
+              className={inputClass + " pl-7"}
+              required
+            />
+          </div>
+        </Field>
+        <Field label="Approved">
+          <select
+            value={form.approved}
+            onChange={(e) => set("approved", e.target.value)}
+            className={inputClass}
+          >
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Declined">Declined</option>
+          </select>
+        </Field>
+      </div>
+
+      <Field label="Administrative Notes">
+        <textarea
+          value={form.administrativeNotes}
+          onChange={(e) => set("administrativeNotes", e.target.value)}
+          placeholder="Internal notes..."
+          rows={2}
+          className={inputClass + " resize-none"}
+        />
+      </Field>
+
+      <div className="flex items-center justify-between border-t border-[#313131] pt-4">
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-[13px] text-[#989898] transition-colors hover:text-white"
+        >
+          Back
+        </button>
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="rounded-[8px] bg-[#7987FF] px-5 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Review
+        </button>
+      </div>
+    </form>
+  );
+}
+
 function formatCurrency(value: string) {
   if (!value) return "—";
   return `$${parseFloat(value).toFixed(2)}`;
@@ -498,17 +830,25 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 }
 
 function ReviewStep({
-  form,
+  recordType,
+  items,
   onBack,
   onComplete,
+  onSendWithAgent,
 }: {
-  form: InvoiceFormData;
+  recordType: RecordType;
+  items: { label: string; value: string }[];
   onBack: () => void;
   onComplete: () => void;
+  onSendWithAgent?: () => void;
 }) {
   function handleComplete() {
-    // TODO: Save invoice record to Google Sheets backend.
-    // NOTE: form.email is EMAIL-ONLY / NON-SHEET — omit it from the record payload sent to Sheets.
+    if (recordType === "estimate") {
+      // TODO: Save estimate record to Google Sheets backend
+    } else {
+      // TODO: Save invoice record to Google Sheets backend
+    }
+    // NOTE: email is EMAIL-ONLY / NON-SHEET — omit it from the record payload sent to Sheets.
     onComplete();
   }
 
@@ -519,43 +859,9 @@ function ReviewStep({
       </p>
 
       <div className="flex flex-col divide-y divide-[#313131]/50 rounded-[10px] border border-[#313131] bg-[#1e1e1e] px-4 py-2">
-        <ReviewRow label="Invoice Date" value={form.invoiceDate} />
-        <ReviewRow label="Date Work Completed" value={form.dateWorkCompleted} />
-        <ReviewRow label="Payment Due" value={form.paymentDue} />
-        <ReviewRow label="Payment Status" value="PENDING" />
-        <ReviewRow label="Estimate Reference" value={form.estimateReference} />
-        <ReviewRow label="Invoice #" value={form.invoiceNumber} />
-        <ReviewRow label="Client" value={form.client} />
-        <ReviewRow label="Email" value={form.email} />
-        <ReviewRow label="Property" value={form.property} />
-        <ReviewRow
-          label="Project Description"
-          value={form.projectDescription}
-        />
-        <ReviewRow
-          label="Cost to Client"
-          value={formatCurrency(form.costToClient)}
-        />
-        <ReviewRow
-          label="Labor Expense"
-          value={formatCurrency(form.laborExpense)}
-        />
-        <ReviewRow
-          label="Equipment Expense"
-          value={formatCurrency(form.equipmentExpense)}
-        />
-        <ReviewRow
-          label="Materials Expense"
-          value={formatCurrency(form.materialsExpense)}
-        />
-        <ReviewRow label="Admin Notes" value={form.administrativeNotes} />
-        <ReviewRow label="Completion Status" value={form.completionStatus} />
-        {form.serviceCategories.length > 0 && (
-          <ReviewRow
-            label="Services"
-            value={form.serviceCategories.join(", ")}
-          />
-        )}
+        {items.map((item) => (
+          <ReviewRow key={item.label} label={item.label} value={item.value} />
+        ))}
       </div>
 
       <div className="flex items-center justify-between border-t border-[#313131] pt-4">
@@ -574,9 +880,14 @@ function ReviewStep({
             Complete
           </button>
           <button
-            disabled
-            className="flex items-center gap-2 rounded-[8px] border border-[#313131] bg-[#1e1e1e] px-5 py-2 text-[13px] font-medium text-[#989898] opacity-50 cursor-not-allowed"
-            title="Coming soon"
+            disabled={!onSendWithAgent}
+            onClick={onSendWithAgent}
+            className={`flex items-center gap-2 rounded-[8px] border border-[#313131] bg-[#1e1e1e] px-5 py-2 text-[13px] font-medium ${
+              onSendWithAgent
+                ? "text-white transition-colors hover:border-[#7987FF]"
+                : "text-[#989898] opacity-50 cursor-not-allowed"
+            }`}
+            title={onSendWithAgent ? undefined : "Coming soon"}
           >
             <Bot className="size-4" />
             Send with Agent
@@ -587,16 +898,27 @@ function ReviewStep({
   );
 }
 
-function SuccessStep({ onClose }: { onClose: () => void }) {
+function SuccessStep({
+  recordType,
+  onClose,
+}: {
+  recordType: RecordType;
+  onClose: () => void;
+}) {
+  const isEstimate = recordType === "estimate";
   return (
     <div className="flex flex-col items-center gap-4 py-8">
       <div className="flex size-14 items-center justify-center rounded-full bg-[#7987FF]/20">
         <Check className="size-7 text-[#7987FF]" />
       </div>
       <div className="text-center">
-        <p className="text-[17px] font-semibold text-white">Invoice Created</p>
+        <p className="text-[17px] font-semibold text-white">
+          {isEstimate ? "Estimate Created" : "Invoice Created"}
+        </p>
         <p className="mt-1 text-[13px] text-[#989898]">
-          Payment status set to PENDING.
+          {isEstimate
+            ? "Approval status set to PENDING."
+            : "Payment status set to PENDING."}
         </p>
       </div>
       <button
