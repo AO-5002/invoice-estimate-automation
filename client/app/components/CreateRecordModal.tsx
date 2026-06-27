@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Check, FileText, Bot } from "lucide-react";
 import Modal from "./Modal";
+import { KNOWN_CLIENTS } from "../config/ClientConfig";
 
 const SERVICE_CATEGORIES = [
   "Excavation",
@@ -17,6 +18,7 @@ interface InvoiceFormData {
   paymentDue: string;
   estimateReference: string;
   invoiceNumber: string;
+  clientSelection: string;
   client: string;
   property: string;
   projectDescription: string;
@@ -27,7 +29,11 @@ interface InvoiceFormData {
   administrativeNotes: string;
   completionStatus: string;
   serviceCategories: string[];
+  // EMAIL-ONLY / NON-SHEET — used for the emailing step, never sent to the backend/Sheets.
+  email: string;
 }
+
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 const INITIAL_FORM: InvoiceFormData = {
   invoiceDate: new Date().toISOString().split("T")[0],
@@ -35,6 +41,7 @@ const INITIAL_FORM: InvoiceFormData = {
   paymentDue: "",
   estimateReference: "",
   invoiceNumber: "",
+  clientSelection: "",
   client: "",
   property: "",
   projectDescription: "",
@@ -45,6 +52,7 @@ const INITIAL_FORM: InvoiceFormData = {
   administrativeNotes: "",
   completionStatus: "",
   serviceCategories: [],
+  email: "",
 };
 
 type Step = "select-type" | "invoice-form" | "review" | "success";
@@ -166,14 +174,40 @@ function InvoiceForm({
   onBack: () => void;
   onReview: () => void;
 }) {
+  const otherClientRef = useRef<HTMLInputElement>(null);
+  const isOther = form.clientSelection === "__other__";
+  const isKnownClient = form.clientSelection !== "" && !isOther;
+
+  useEffect(() => {
+    if (isOther) otherClientRef.current?.focus();
+  }, [isOther]);
+
   const set = (key: keyof InvoiceFormData, value: string | string[]) =>
     onChange({ ...form, [key]: value });
+
+  function handleClientSelection(value: string) {
+    if (value === "__other__") {
+      onChange({ ...form, clientSelection: "__other__", client: "", email: "" });
+    } else if (value === "") {
+      onChange({ ...form, clientSelection: "", client: "", email: "" });
+    } else {
+      const match = KNOWN_CLIENTS.find((c) => c.name === value);
+      onChange({
+        ...form,
+        clientSelection: value,
+        client: value,
+        email: match?.email ?? "",
+      });
+    }
+  }
 
   const canSubmit =
     form.invoiceDate &&
     form.client &&
     form.projectDescription &&
-    form.costToClient;
+    form.costToClient &&
+    form.email &&
+    isValidEmail(form.email);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -247,14 +281,22 @@ function InvoiceForm({
 
       <div className="grid grid-cols-2 gap-4">
         <Field label="Client" required>
-          <input
-            type="text"
-            value={form.client}
-            onChange={(e) => set("client", e.target.value)}
-            placeholder="Client name"
+          <select
+            value={form.clientSelection ?? ""}
+            onChange={(e) => handleClientSelection(e.target.value)}
             className={inputClass}
             required
-          />
+          >
+            <option value="" disabled>
+              Select a client…
+            </option>
+            {KNOWN_CLIENTS.map((c) => (
+              <option key={c.name} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+            <option value="__other__">Other (enter manually)</option>
+          </select>
         </Field>
         <Field label="Property">
           <input
@@ -266,6 +308,35 @@ function InvoiceForm({
           />
         </Field>
       </div>
+
+      {isOther && (
+        <Field label="Client Name" required>
+          <input
+            ref={otherClientRef}
+            type="text"
+            value={form.client}
+            onChange={(e) => set("client", e.target.value)}
+            placeholder="Enter client name"
+            className={inputClass}
+            required
+          />
+        </Field>
+      )}
+
+      <Field label="Email" required>
+        <input
+          type="email"
+          value={form.email ?? ""}
+          onChange={(e) => set("email", e.target.value)}
+          placeholder="client@example.com"
+          readOnly={isKnownClient}
+          className={
+            inputClass +
+            (isKnownClient ? " opacity-60 cursor-not-allowed" : "")
+          }
+          required
+        />
+      </Field>
 
       <Field label="Project Description" required>
         <textarea
@@ -436,7 +507,8 @@ function ReviewStep({
   onComplete: () => void;
 }) {
   function handleComplete() {
-    // TODO: Save invoice record to Google Sheets backend
+    // TODO: Save invoice record to Google Sheets backend.
+    // NOTE: form.email is EMAIL-ONLY / NON-SHEET — omit it from the record payload sent to Sheets.
     onComplete();
   }
 
@@ -454,6 +526,7 @@ function ReviewStep({
         <ReviewRow label="Estimate Reference" value={form.estimateReference} />
         <ReviewRow label="Invoice #" value={form.invoiceNumber} />
         <ReviewRow label="Client" value={form.client} />
+        <ReviewRow label="Email" value={form.email} />
         <ReviewRow label="Property" value={form.property} />
         <ReviewRow
           label="Project Description"
