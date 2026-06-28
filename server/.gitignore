@@ -3,7 +3,15 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+### Secrets — never commit ###
 .env
+# Local secrets directory (drop the service-account key here)
+secrets/
+# Google service-account key files
+*-service-account.json
+service-account*.json
+credentials*.json
 
 ### STS ###
 .apt_generated

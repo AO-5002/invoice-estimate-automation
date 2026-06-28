@@ -28,6 +28,13 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <!-- Pinned dependency versions for the Sheets read path / API docs. -->
+        <google-api-services-sheets.version>v4-rev20260610-2.0.0</google-api-services-sheets.version>
+        <google-api-client.version>2.9.0</google-api-client.version>
+        <google-auth-library.version>1.48.0</google-auth-library.version>
+        <!-- springdoc 3.x is the line that targets Spring Boot 4 / Spring Framework 7
+             (the 2.8.x line is for Spring Boot 3.x and will not work here). -->
+        <springdoc.version>3.0.3</springdoc.version>
     </properties>
     <dependencies>
         <dependency>
@@ -39,6 +46,30 @@
             <groupId>me.paulschwarz</groupId>
             <artifactId>spring-dotenv</artifactId>
             <version>4.0.0</version>
+        </dependency>
+
+        <!-- Google Sheets API client + service-account auth (read path). -->
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-sheets</artifactId>
+            <version>${google-api-services-sheets.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>${google-api-client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auth</groupId>
+            <artifactId>google-auth-library-oauth2-http</artifactId>
+            <version>${google-auth-library.version}</version>
+        </dependency>
+
+        <!-- OpenAPI / Swagger UI (springdoc 3.x for Spring Boot 4). -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
 
         <dependency>
