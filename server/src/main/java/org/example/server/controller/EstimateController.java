@@ -21,6 +21,11 @@ public class EstimateController {
         this.estimateService = estimateService;
     }
 
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello, world!";
+    }
+
     @GetMapping
     @Operation(
             summary = "List all estimates",
