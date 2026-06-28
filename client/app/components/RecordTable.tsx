@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const PAGE_SIZE = 10;
@@ -32,8 +32,14 @@ export default function RecordTable<T extends object>({
   emptyMessage: string;
   errorMessage: string;
 }) {
-  // Client-side pagination; can move server-side if data grows
   const [page, setPage] = useState(0);
+  const prevDataRef = useRef(data);
+  useEffect(() => {
+    if (prevDataRef.current !== data) {
+      setPage(0);
+      prevDataRef.current = data;
+    }
+  }, [data]);
   const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
   const pageData = data.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 

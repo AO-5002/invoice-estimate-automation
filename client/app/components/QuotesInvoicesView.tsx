@@ -1,31 +1,112 @@
 "use client";
 
-import { useState } from "react";
-import ActionsBar from "./ActionsBar";
+import { useState, useCallback } from "react";
+import ActionsBar, { type SortSpec } from "./ActionsBar";
 import AgentViewPanel from "./AgentViewPanel";
-import InvoiceView from "./InvoiceView";
-import EstimateView from "./EstimateView";
+import InvoiceView, {
+  INVOICE_COLUMNS,
+  INVOICE_SORT_FIELDS,
+} from "./InvoiceView";
+import EstimateView, {
+  ESTIMATE_COLUMNS,
+  ESTIMATE_SORT_FIELDS,
+} from "./EstimateView";
 import CreateRecordModal from "./CreateRecordModal";
 
 type View = "agent" | "invoice" | "estimate";
+
+const DEFAULT_INVOICE_SORT: SortSpec = { key: "invoiceDate", direction: "desc" };
+const DEFAULT_ESTIMATE_SORT: SortSpec = {
+  key: "estimateDate",
+  direction: "desc",
+};
 
 export default function QuotesInvoicesView() {
   const [view, setView] = useState<View>("agent");
   const [modalOpen, setModalOpen] = useState(false);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [hiddenInvoiceCols, setHiddenInvoiceCols] = useState<Set<string>>(
+    new Set(),
+  );
+  const [hiddenEstimateCols, setHiddenEstimateCols] = useState<Set<string>>(
+    new Set(),
+  );
+  const [invoiceSort, setInvoiceSort] =
+    useState<SortSpec>(DEFAULT_INVOICE_SORT);
+  const [estimateSort, setEstimateSort] =
+    useState<SortSpec>(DEFAULT_ESTIMATE_SORT);
+
+  const handleViewChange = useCallback((v: View) => {
+    setView(v);
+    setSearchQuery("");
+  }, []);
+
+  const toggleInvoiceCol = useCallback((key: string) => {
+    setHiddenInvoiceCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const toggleEstimateCol = useCallback((key: string) => {
+    setHiddenEstimateCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const isInvoice = view === "invoice";
+  const isEstimate = view === "estimate";
+  const isTable = isInvoice || isEstimate;
+
   return (
     <>
       <ActionsBar
         view={view}
-        onViewChange={setView}
+        onViewChange={handleViewChange}
         onCreate={() => setModalOpen(true)}
+        {...(isTable
+          ? {
+              searchQuery,
+              onSearchChange: setSearchQuery,
+              columns: (isInvoice ? INVOICE_COLUMNS : ESTIMATE_COLUMNS).map(
+                (c) => ({ key: c.key, label: c.label }),
+              ),
+              hiddenColumns: isInvoice
+                ? hiddenInvoiceCols
+                : hiddenEstimateCols,
+              onToggleColumn: isInvoice ? toggleInvoiceCol : toggleEstimateCol,
+              sortFields: isInvoice
+                ? INVOICE_SORT_FIELDS
+                : ESTIMATE_SORT_FIELDS,
+              sortSpec: isInvoice ? invoiceSort : estimateSort,
+              onSortChange: isInvoice ? setInvoiceSort : setEstimateSort,
+            }
+          : {})}
       />
       <div className="flex flex-1 min-h-[300px]">
         {view === "agent" && (
           <AgentViewPanel onCreate={() => setModalOpen(true)} />
         )}
-        {view === "invoice" && <InvoiceView />}
-        {view === "estimate" && <EstimateView />}
+        {isInvoice && (
+          <InvoiceView
+            searchQuery={searchQuery}
+            hiddenColumns={hiddenInvoiceCols}
+            sortSpec={invoiceSort}
+          />
+        )}
+        {isEstimate && (
+          <EstimateView
+            searchQuery={searchQuery}
+            hiddenColumns={hiddenEstimateCols}
+            sortSpec={estimateSort}
+          />
+        )}
       </div>
       <CreateRecordModal
         open={modalOpen}

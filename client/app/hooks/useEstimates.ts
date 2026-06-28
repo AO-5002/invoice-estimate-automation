@@ -1,5 +1,3 @@
-import useSWR from "swr";
-
 export interface EstimateRecord {
   estimateNumber: string;
   estimateDate: string;
@@ -11,20 +9,13 @@ export interface EstimateRecord {
   administrativeNotes: string;
 }
 
-// TODO: point at the Google Sheets estimates read endpoint once backend exists
-const ESTIMATES_ENDPOINT = "/api/estimates";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+// TODO: real Sheets endpoint
+import { DUMMY_ESTIMATES } from "../data/dummy-data";
 
 export function useEstimates() {
-  const { data, error, isLoading } = useSWR<EstimateRecord[]>(
-    ESTIMATES_ENDPOINT,
-    fetcher,
-  );
-
   return {
-    estimates: data ?? [],
-    isLoading,
-    isError: !!error,
+    estimates: DUMMY_ESTIMATES,
+    isLoading: false,
+    isError: false,
   };
 }

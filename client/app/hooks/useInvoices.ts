@@ -1,5 +1,3 @@
-import useSWR from "swr";
-
 export interface InvoiceRecord {
   invoiceDate: string;
   dateWorkCompleted: string;
@@ -18,20 +16,13 @@ export interface InvoiceRecord {
   serviceCategories: string[];
 }
 
-// TODO: point at the Google Sheets read endpoint once the backend exists
-const INVOICES_ENDPOINT = "/api/invoices";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+// TODO: real Sheets endpoint
+import { DUMMY_INVOICES } from "../data/dummy-data";
 
 export function useInvoices() {
-  const { data, error, isLoading } = useSWR<InvoiceRecord[]>(
-    INVOICES_ENDPOINT,
-    fetcher,
-  );
-
   return {
-    invoices: data ?? [],
-    isLoading,
-    isError: !!error,
+    invoices: DUMMY_INVOICES,
+    isLoading: false,
+    isError: false,
   };
 }
