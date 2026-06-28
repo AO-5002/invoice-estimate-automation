@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useInvoices, type InvoiceRecord } from "../hooks/useInvoices";
 import RecordTable, { type Column } from "./RecordTable";
 import type { SortSpec, SortField } from "./ActionsBar";
@@ -12,15 +12,20 @@ function formatCurrency(value: unknown): string {
 }
 
 export const INVOICE_COLUMNS: Column<InvoiceRecord>[] = [
-  { key: "invoiceNumber", label: "Invoice #" },
-  { key: "client", label: "Client" },
-  { key: "invoiceDate", label: "Invoice Date" },
-  { key: "paymentDue", label: "Payment Due" },
-  { key: "completionStatus", label: "Status" },
-  { key: "estimateReference", label: "Est. Ref" },
-  { key: "costToClient", label: "Cost", format: formatCurrency },
-  { key: "property", label: "Property" },
-  { key: "projectDescription", label: "Description" },
+  { key: "invoiceNumber", label: "Invoice #", editable: "text" },
+  { key: "client", label: "Client", editable: "text" },
+  { key: "invoiceDate", label: "Invoice Date", editable: "date" },
+  { key: "paymentDue", label: "Payment Due", editable: "date" },
+  { key: "completionStatus", label: "Status", editable: "text" },
+  { key: "estimateReference", label: "Est. Ref", editable: "text" },
+  {
+    key: "costToClient",
+    label: "Cost",
+    format: formatCurrency,
+    editable: "number",
+  },
+  { key: "property", label: "Property", editable: "text" },
+  { key: "projectDescription", label: "Description", editable: "text" },
   { key: "serviceCategories", label: "Services" },
 ];
 
@@ -57,12 +62,29 @@ export default function InvoiceView({
   searchQuery = "",
   hiddenColumns,
   sortSpec,
+  locked = true,
 }: {
   searchQuery?: string;
   hiddenColumns?: Set<string>;
   sortSpec?: SortSpec;
+  locked?: boolean;
 }) {
-  const { invoices, isLoading, isError } = useInvoices();
+  const { invoices: initialInvoices, isLoading, isError } = useInvoices();
+  // local-only mutable state
+  const [invoices, setInvoices] = useState<InvoiceRecord[]>(initialInvoices);
+
+  const updateRecord = useCallback(
+    (id: string, key: string, value: string) => {
+      setInvoices((prev) =>
+        prev.map((r) =>
+          r.invoiceNumber === id
+            ? ({ ...r, [key]: value } as InvoiceRecord)
+            : r,
+        ),
+      );
+    },
+    [],
+  );
 
   const processedData = useMemo(() => {
     let result = invoices;
@@ -97,6 +119,9 @@ export default function InvoiceView({
       isError={isError}
       emptyMessage="No invoices yet"
       errorMessage="Failed to load invoices. Please try again later."
+      locked={locked}
+      identifierKey="invoiceNumber"
+      onCellEdit={updateRecord}
     />
   );
 }

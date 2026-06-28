@@ -24,6 +24,7 @@ const DEFAULT_ESTIMATE_SORT: SortSpec = {
 export default function QuotesInvoicesView() {
   const [view, setView] = useState<View>("agent");
   const [modalOpen, setModalOpen] = useState(false);
+  const [locked, setLocked] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [hiddenInvoiceCols, setHiddenInvoiceCols] = useState<Set<string>>(
@@ -86,6 +87,8 @@ export default function QuotesInvoicesView() {
                 : ESTIMATE_SORT_FIELDS,
               sortSpec: isInvoice ? invoiceSort : estimateSort,
               onSortChange: isInvoice ? setInvoiceSort : setEstimateSort,
+              locked,
+              onToggleLock: () => setLocked((v) => !v),
             }
           : {})}
       />
@@ -98,6 +101,7 @@ export default function QuotesInvoicesView() {
             searchQuery={searchQuery}
             hiddenColumns={hiddenInvoiceCols}
             sortSpec={invoiceSort}
+            locked={locked}
           />
         )}
         {isEstimate && (
@@ -105,6 +109,7 @@ export default function QuotesInvoicesView() {
             searchQuery={searchQuery}
             hiddenColumns={hiddenEstimateCols}
             sortSpec={estimateSort}
+            locked={locked}
           />
         )}
       </div>

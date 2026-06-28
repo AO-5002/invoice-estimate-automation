@@ -9,6 +9,8 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
+  Lock,
+  LockOpen,
 } from "lucide-react";
 
 type View = "agent" | "invoice" | "estimate";
@@ -49,6 +51,8 @@ export default function ActionsBar({
   sortFields,
   sortSpec,
   onSortChange,
+  locked,
+  onToggleLock,
 }: {
   label?: string;
   view?: View;
@@ -62,6 +66,8 @@ export default function ActionsBar({
   sortFields?: SortField[];
   sortSpec?: SortSpec;
   onSortChange?: (spec: SortSpec) => void;
+  locked?: boolean;
+  onToggleLock?: () => void;
 }) {
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const viewRef = useRef<HTMLDivElement>(null);
@@ -156,7 +162,22 @@ export default function ActionsBar({
         )}
       </div>
 
-      <div className="flex items-center gap-[22px]">
+      <div className="  flex justify-center items-start gap-[22px]">
+        {/* Lock */}
+        {locked !== undefined && onToggleLock && (
+          <button
+            onClick={onToggleLock}
+            className={`transition-colors ${locked ? "text-white/40 hover:text-white/60" : "text-[#7987FF] hover:text-[#7987FF]/80"}`}
+            title={locked ? "Unlock editing" : "Lock editing"}
+          >
+            {locked ? (
+              <Lock className="size-[15px]" />
+            ) : (
+              <LockOpen className="size-[15px]" />
+            )}
+          </button>
+        )}
+
         {/* Sort */}
         <div className="relative" ref={sortRef}>
           <button

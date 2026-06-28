@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useEstimates, type EstimateRecord } from "../hooks/useEstimates";
 import RecordTable, { type Column } from "./RecordTable";
 import type { SortSpec, SortField } from "./ActionsBar";
@@ -12,14 +12,19 @@ function formatCurrency(value: unknown): string {
 }
 
 export const ESTIMATE_COLUMNS: Column<EstimateRecord>[] = [
-  { key: "estimateNumber", label: "Estimate #" },
-  { key: "estimateDate", label: "Date Sent to Client" },
-  { key: "client", label: "Client" },
-  { key: "property", label: "Property" },
-  { key: "projectDescription", label: "Description" },
-  { key: "costToClient", label: "Cost", format: formatCurrency },
-  { key: "approved", label: "Approved" },
-  { key: "administrativeNotes", label: "Admin Notes" },
+  { key: "estimateNumber", label: "Estimate #", editable: "text" },
+  { key: "estimateDate", label: "Date Sent to Client", editable: "date" },
+  { key: "client", label: "Client", editable: "text" },
+  { key: "property", label: "Property", editable: "text" },
+  { key: "projectDescription", label: "Description", editable: "text" },
+  {
+    key: "costToClient",
+    label: "Cost",
+    format: formatCurrency,
+    editable: "number",
+  },
+  { key: "approved", label: "Approved", editable: "text" },
+  { key: "administrativeNotes", label: "Admin Notes", editable: "text" },
 ];
 
 export const ESTIMATE_SORT_FIELDS: SortField[] = [
@@ -55,12 +60,30 @@ export default function EstimateView({
   searchQuery = "",
   hiddenColumns,
   sortSpec,
+  locked = true,
 }: {
   searchQuery?: string;
   hiddenColumns?: Set<string>;
   sortSpec?: SortSpec;
+  locked?: boolean;
 }) {
-  const { estimates, isLoading, isError } = useEstimates();
+  const { estimates: initialEstimates, isLoading, isError } = useEstimates();
+  // local-only mutable state
+  const [estimates, setEstimates] =
+    useState<EstimateRecord[]>(initialEstimates);
+
+  const updateRecord = useCallback(
+    (id: string, key: string, value: string) => {
+      setEstimates((prev) =>
+        prev.map((r) =>
+          r.estimateNumber === id
+            ? ({ ...r, [key]: value } as EstimateRecord)
+            : r,
+        ),
+      );
+    },
+    [],
+  );
 
   const processedData = useMemo(() => {
     let result = estimates;
@@ -95,6 +118,9 @@ export default function EstimateView({
       isError={isError}
       emptyMessage="No estimates yet"
       errorMessage="Failed to load estimates. Please try again later."
+      locked={locked}
+      identifierKey="estimateNumber"
+      onCellEdit={updateRecord}
     />
   );
 }
