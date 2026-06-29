@@ -17,7 +17,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "1200",
     materialsExpense: "4800",
     administrativeNotes: "Client requested granite countertops",
-    completionStatus: "Completed",
     serviceCategories: ["Remodeling"],
   },
   {
@@ -35,7 +34,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "400",
     materialsExpense: "600",
     administrativeNotes: "",
-    completionStatus: "Completed",
     serviceCategories: ["Plumbing"],
   },
   {
@@ -53,7 +51,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "2000",
     materialsExpense: "250",
     administrativeNotes: "Requires city permit for removal",
-    completionStatus: "In Progress",
     serviceCategories: ["Tree Trimming"],
   },
   {
@@ -71,7 +68,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "2500",
     materialsExpense: "800",
     administrativeNotes: "",
-    completionStatus: "Completed",
     serviceCategories: ["Excavation"],
   },
   {
@@ -89,7 +85,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "300",
     materialsExpense: "1500",
     administrativeNotes: "Follow-up to kitchen remodel",
-    completionStatus: "In Progress",
     serviceCategories: ["Plumbing", "Remodeling"],
   },
   {
@@ -107,7 +102,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "300",
     materialsExpense: "100",
     administrativeNotes: "",
-    completionStatus: "Completed",
     serviceCategories: ["Tree Trimming"],
   },
   {
@@ -125,7 +119,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "3500",
     materialsExpense: "1200",
     administrativeNotes: "County inspection required before backfill",
-    completionStatus: "Not Started",
     serviceCategories: ["Excavation", "Plumbing"],
   },
   {
@@ -143,7 +136,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "400",
     materialsExpense: "2800",
     administrativeNotes: "Used low-VOC paint per request",
-    completionStatus: "Completed",
     serviceCategories: ["Remodeling"],
   },
   {
@@ -161,7 +153,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "3000",
     materialsExpense: "2000",
     administrativeNotes: "",
-    completionStatus: "In Progress",
     serviceCategories: ["Excavation", "Plumbing"],
   },
   {
@@ -179,7 +170,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "600",
     materialsExpense: "100",
     administrativeNotes: "",
-    completionStatus: "Completed",
     serviceCategories: ["Tree Trimming"],
   },
   {
@@ -197,7 +187,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "800",
     materialsExpense: "5500",
     administrativeNotes: "Tile selection pending client approval",
-    completionStatus: "Not Started",
     serviceCategories: ["Remodeling", "Plumbing"],
   },
   {
@@ -215,7 +204,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "1200",
     materialsExpense: "400",
     administrativeNotes: "",
-    completionStatus: "Completed",
     serviceCategories: ["Excavation"],
   },
   {
@@ -233,7 +221,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "500",
     materialsExpense: "1800",
     administrativeNotes: "Coordinate with general contractor",
-    completionStatus: "In Progress",
     serviceCategories: ["Plumbing"],
   },
   {
@@ -251,7 +238,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "400",
     materialsExpense: "100",
     administrativeNotes: "",
-    completionStatus: "Completed",
     serviceCategories: ["Tree Trimming"],
   },
   {
@@ -269,7 +255,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "6000",
     materialsExpense: "3500",
     administrativeNotes: "Heavy equipment access from north gate only",
-    completionStatus: "Not Started",
     serviceCategories: ["Excavation"],
   },
   {
@@ -287,7 +272,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "200",
     materialsExpense: "1900",
     administrativeNotes: "",
-    completionStatus: "Completed",
     serviceCategories: ["Plumbing"],
   },
   {
@@ -305,7 +289,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "1500",
     materialsExpense: "11000",
     administrativeNotes: "Phased project — kitchen first",
-    completionStatus: "In Progress",
     serviceCategories: ["Remodeling", "Plumbing"],
   },
   {
@@ -323,7 +306,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "200",
     materialsExpense: "100",
     administrativeNotes: "",
-    completionStatus: "Completed",
     serviceCategories: ["Tree Trimming"],
   },
   {
@@ -341,7 +323,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "800",
     materialsExpense: "3500",
     administrativeNotes: "Gas line requires licensed sub",
-    completionStatus: "Not Started",
     serviceCategories: ["Plumbing", "Remodeling"],
   },
   {
@@ -359,7 +340,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "1800",
     materialsExpense: "500",
     administrativeNotes: "",
-    completionStatus: "Completed",
     serviceCategories: ["Excavation"],
   },
   {
@@ -377,7 +357,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "4000",
     materialsExpense: "6000",
     administrativeNotes: "HOA board approval received",
-    completionStatus: "In Progress",
     serviceCategories: ["Remodeling", "Excavation"],
   },
   {
@@ -395,7 +374,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "600",
     materialsExpense: "1500",
     administrativeNotes: "Leak detected via thermal imaging",
-    completionStatus: "Completed",
     serviceCategories: ["Plumbing"],
   },
   {
@@ -413,7 +391,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "5500",
     materialsExpense: "2000",
     administrativeNotes: "Soil report attached",
-    completionStatus: "Not Started",
     serviceCategories: ["Excavation"],
   },
   {
@@ -431,7 +408,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "100",
     materialsExpense: "600",
     administrativeNotes: "",
-    completionStatus: "Completed",
     serviceCategories: ["Plumbing"],
   },
   {
@@ -449,7 +425,6 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     equipmentExpense: "3000",
     materialsExpense: "1000",
     administrativeNotes: "Concrete pour scheduled separately",
-    completionStatus: "In Progress",
     serviceCategories: ["Excavation"],
   },
 ];

@@ -1,15 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useInvoices, type InvoiceRecord } from "../hooks/useInvoices";
 import RecordTable, { type Column } from "./RecordTable";
 import type { SortSpec, SortField } from "./ActionsBar";
-
-function formatCurrency(value: unknown): string {
-  if (value == null || value === "") return "—";
-  const n = parseFloat(String(value));
-  return isNaN(n) ? "—" : `$${n.toFixed(2)}`;
-}
+import { compareDates, formatCurrency, parseCurrencyAmount } from "../lib/format";
 
 export const INVOICE_COLUMNS: Column<InvoiceRecord>[] = [
   { key: "invoiceNumber", label: "Invoice #", editable: "text" },
@@ -17,7 +12,6 @@ export const INVOICE_COLUMNS: Column<InvoiceRecord>[] = [
   { key: "invoiceDate", label: "Invoice Date", editable: "date" },
   { key: "paymentDue", label: "Payment Due", editable: "date" },
   { key: "paymentStatus", label: "Payment Status", editable: "text" },
-  { key: "completionStatus", label: "Completion", editable: "text" },
   { key: "estimateReference", label: "Est. Ref", editable: "text" },
   {
     key: "costToClient",
@@ -34,7 +28,6 @@ export const INVOICE_SORT_FIELDS: SortField[] = [
   { key: "invoiceDate", label: "Date" },
   { key: "costToClient", label: "Cost" },
   { key: "client", label: "Client" },
-  { key: "completionStatus", label: "Status" },
   { key: "paymentStatus", label: "Payment Status" },
   { key: "invoiceNumber", label: "Invoice #" },
 ];
@@ -52,13 +45,18 @@ function compareField(
   a: InvoiceRecord,
   b: InvoiceRecord,
   key: string,
+  direction: SortSpec["direction"],
 ): number {
+  if (key === "invoiceDate") {
+    return compareDates(a.invoiceDate, b.invoiceDate, direction);
+  }
   const av = a[key as keyof InvoiceRecord] ?? "";
   const bv = b[key as keyof InvoiceRecord] ?? "";
-  if (key === "costToClient") {
-    return (parseFloat(String(av)) || 0) - (parseFloat(String(bv)) || 0);
-  }
-  return String(av).localeCompare(String(bv));
+  const cmp =
+    key === "costToClient"
+      ? (parseCurrencyAmount(av) || 0) - (parseCurrencyAmount(bv) || 0)
+      : String(av).localeCompare(String(bv));
+  return direction === "asc" ? cmp : -cmp;
 }
 
 export default function InvoiceView({
@@ -73,14 +71,14 @@ export default function InvoiceView({
   locked?: boolean;
 }) {
   const { invoices: initialInvoices, isLoading, isError } = useInvoices();
-  // local-only mutable state
+  // local-only mutable state, re-seeded when the fetched data changes
+  // (initialInvoices is `[]` on the first render while SWR is still loading).
   const [invoices, setInvoices] = useState<InvoiceRecord[]>(initialInvoices);
-
-  // Seed local state once the fetched data arrives (initialInvoices is `[]`
-  // on the first render while SWR is still loading).
-  useEffect(() => {
+  const [seededFrom, setSeededFrom] = useState(initialInvoices);
+  if (seededFrom !== initialInvoices) {
+    setSeededFrom(initialInvoices);
     setInvoices(initialInvoices);
-  }, [initialInvoices]);
+  }
 
   const updateRecord = useCallback(
     (id: string, key: string, value: string) => {
@@ -106,10 +104,9 @@ export default function InvoiceView({
     }
 
     if (sortSpec) {
-      result = [...result].sort((a, b) => {
-        const cmp = compareField(a, b, sortSpec.key);
-        return sortSpec.direction === "asc" ? cmp : -cmp;
-      });
+      result = [...result].sort((a, b) =>
+        compareField(a, b, sortSpec.key, sortSpec.direction),
+      );
     }
 
     return result;

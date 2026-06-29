@@ -36,6 +36,7 @@ public enum InvoiceColumn {
     EQUIPMENT_EXPENSE(14),
     MATERIALS_EXPENSE(15),
     ADMINISTRATIVE_NOTES(16),
+    /** Column R. Alignment placeholder — kept so later indices stay anchored; not read into the DTO. */
     COMPLETION_STATUS(17),
     EXCAVATION(18),
     PLUMBING(19),
@@ -75,7 +76,6 @@ public enum InvoiceColumn {
                 EQUIPMENT_EXPENSE.from(row),
                 MATERIALS_EXPENSE.from(row),
                 ADMINISTRATIVE_NOTES.from(row),
-                COMPLETION_STATUS.from(row),
                 parseCategories(row));
     }
 

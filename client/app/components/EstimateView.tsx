@@ -1,15 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useEstimates, type EstimateRecord } from "../hooks/useEstimates";
 import RecordTable, { type Column } from "./RecordTable";
 import type { SortSpec, SortField } from "./ActionsBar";
-
-function formatCurrency(value: unknown): string {
-  if (value == null || value === "") return "—";
-  const n = parseFloat(String(value));
-  return isNaN(n) ? "—" : `$${n.toFixed(2)}`;
-}
+import { compareDates, formatCurrency, parseCurrencyAmount } from "../lib/format";
 
 export const ESTIMATE_COLUMNS: Column<EstimateRecord>[] = [
   { key: "estimateNumber", label: "Estimate #", editable: "text" },
@@ -47,13 +42,18 @@ function compareField(
   a: EstimateRecord,
   b: EstimateRecord,
   key: string,
+  direction: SortSpec["direction"],
 ): number {
+  if (key === "estimateDate") {
+    return compareDates(a.estimateDate, b.estimateDate, direction);
+  }
   const av = a[key as keyof EstimateRecord] ?? "";
   const bv = b[key as keyof EstimateRecord] ?? "";
-  if (key === "costToClient") {
-    return (parseFloat(String(av)) || 0) - (parseFloat(String(bv)) || 0);
-  }
-  return String(av).localeCompare(String(bv));
+  const cmp =
+    key === "costToClient"
+      ? (parseCurrencyAmount(av) || 0) - (parseCurrencyAmount(bv) || 0)
+      : String(av).localeCompare(String(bv));
+  return direction === "asc" ? cmp : -cmp;
 }
 
 export default function EstimateView({
@@ -68,15 +68,15 @@ export default function EstimateView({
   locked?: boolean;
 }) {
   const { estimates: initialEstimates, isLoading, isError } = useEstimates();
-  // local-only mutable state
+  // local-only mutable state, re-seeded when the fetched data changes
+  // (initialEstimates is `[]` on the first render while SWR is still loading).
   const [estimates, setEstimates] =
     useState<EstimateRecord[]>(initialEstimates);
-
-  // Seed local state once the fetched data arrives (initialEstimates is `[]`
-  // on the first render while SWR is still loading).
-  useEffect(() => {
+  const [seededFrom, setSeededFrom] = useState(initialEstimates);
+  if (seededFrom !== initialEstimates) {
+    setSeededFrom(initialEstimates);
     setEstimates(initialEstimates);
-  }, [initialEstimates]);
+  }
 
   const updateRecord = useCallback(
     (id: string, key: string, value: string) => {
@@ -102,10 +102,9 @@ export default function EstimateView({
     }
 
     if (sortSpec) {
-      result = [...result].sort((a, b) => {
-        const cmp = compareField(a, b, sortSpec.key);
-        return sortSpec.direction === "asc" ? cmp : -cmp;
-      });
+      result = [...result].sort((a, b) =>
+        compareField(a, b, sortSpec.key, sortSpec.direction),
+      );
     }
 
     return result;

@@ -16,7 +16,6 @@ export interface InvoiceRecord {
   equipmentExpense: string;
   materialsExpense: string;
   administrativeNotes: string;
-  completionStatus: string;
   serviceCategories: string[];
 }
 

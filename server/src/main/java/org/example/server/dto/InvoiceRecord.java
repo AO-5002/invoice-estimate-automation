@@ -24,6 +24,5 @@ public record InvoiceRecord(
         String equipmentExpense,
         String materialsExpense,
         String administrativeNotes,
-        String completionStatus,
         List<String> serviceCategories) {
 }
