@@ -10,17 +10,21 @@ import java.util.List;
  * index. Column order is encoded here and nowhere else — the row-to-DTO parser reads only from
  * this enum, and the A1 read range is derived from it.
  *
- * <p>Assumed sheet layout (columns A..H, in this order). Row 1 is treated as a header and skipped.
+ * <p>Physical sheet layout (columns A..I, in this order). Row 1 is treated as a header and skipped.
+ * {@link #ID} exists only to anchor the indices of every other column; it is deliberately not read
+ * into the DTO. (The estimate tab, like the invoice tab, has a leading column the DTO ignores.)
  */
 public enum EstimateColumn {
-    ESTIMATE_NUMBER(0),
-    ESTIMATE_DATE(1),
-    CLIENT(2),
-    PROPERTY(3),
-    PROJECT_DESCRIPTION(4),
-    COST_TO_CLIENT(5),
-    APPROVED(6),
-    ADMINISTRATIVE_NOTES(7);
+    /** Column A. Alignment placeholder — kept so later indices stay anchored; not read into the DTO. */
+    ID(0),
+    ESTIMATE_NUMBER(1),
+    ESTIMATE_DATE(2),
+    CLIENT(3),
+    PROPERTY(4),
+    PROJECT_DESCRIPTION(5),
+    COST_TO_CLIENT(6),
+    APPROVED(7),
+    ADMINISTRATIVE_NOTES(8);
 
     private final int index;
 
