@@ -6,6 +6,7 @@ import org.example.server.sheets.InvoiceColumn;
 import org.example.server.sheets.SheetsReader;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -34,11 +35,22 @@ public class InvoiceService extends CachingSheetService<InvoiceRecord> {
         return rows.stream()
                 .filter(row -> !row.isEmpty())
                 .map(InvoiceColumn::parse)
+                // Newest invoiceDate first; ISO-8601 strings sort lexicographically.
+                // Blank/null dates are pushed to the bottom rather than parsed.
+                .sorted(Comparator.comparing(
+                        InvoiceService::dateKey,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
     }
 
     @Override
     protected String label() {
         return "invoices";
+    }
+
+    /** Returns the invoice date, or null when blank, so blank-dated rows sort last. */
+    private static String dateKey(InvoiceRecord record) {
+        String date = record.invoiceDate();
+        return (date == null || date.isBlank()) ? null : date;
     }
 }

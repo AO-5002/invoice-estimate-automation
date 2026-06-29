@@ -1,3 +1,6 @@
+import useSWR from "swr";
+import { fetcher } from "../lib/fetcher";
+
 export interface EstimateRecord {
   estimateNumber: string;
   estimateDate: string;
@@ -9,13 +12,18 @@ export interface EstimateRecord {
   administrativeNotes: string;
 }
 
-// TODO: real Sheets endpoint
-import { DUMMY_ESTIMATES } from "../data/dummy-data";
+const EMPTY: EstimateRecord[] = [];
 
 export function useEstimates() {
+  const { data, isLoading, error } = useSWR<EstimateRecord[]>(
+    "/api/estimates",
+    fetcher,
+  );
+
   return {
-    estimates: DUMMY_ESTIMATES,
-    isLoading: false,
-    isError: false,
+    // Stable reference while loading so consumers' effects don't loop.
+    estimates: data ?? EMPTY,
+    isLoading,
+    isError: Boolean(error),
   };
 }

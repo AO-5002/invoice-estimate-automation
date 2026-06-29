@@ -1,7 +1,11 @@
+import useSWR from "swr";
+import { fetcher } from "../lib/fetcher";
+
 export interface InvoiceRecord {
   invoiceDate: string;
   dateWorkCompleted: string;
   paymentDue: string;
+  paymentStatus: string;
   estimateReference: string;
   invoiceNumber: string;
   client: string;
@@ -16,13 +20,18 @@ export interface InvoiceRecord {
   serviceCategories: string[];
 }
 
-// TODO: real Sheets endpoint
-import { DUMMY_INVOICES } from "../data/dummy-data";
+const EMPTY: InvoiceRecord[] = [];
 
 export function useInvoices() {
+  const { data, isLoading, error } = useSWR<InvoiceRecord[]>(
+    "/api/invoices",
+    fetcher,
+  );
+
   return {
-    invoices: DUMMY_INVOICES,
-    isLoading: false,
-    isError: false,
+    // Stable reference while loading so consumers' effects don't loop.
+    invoices: data ?? EMPTY,
+    isLoading,
+    isError: Boolean(error),
   };
 }

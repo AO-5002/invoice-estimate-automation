@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useInvoices, type InvoiceRecord } from "../hooks/useInvoices";
 import RecordTable, { type Column } from "./RecordTable";
 import type { SortSpec, SortField } from "./ActionsBar";
@@ -16,7 +16,8 @@ export const INVOICE_COLUMNS: Column<InvoiceRecord>[] = [
   { key: "client", label: "Client", editable: "text" },
   { key: "invoiceDate", label: "Invoice Date", editable: "date" },
   { key: "paymentDue", label: "Payment Due", editable: "date" },
-  { key: "completionStatus", label: "Status", editable: "text" },
+  { key: "paymentStatus", label: "Payment Status", editable: "text" },
+  { key: "completionStatus", label: "Completion", editable: "text" },
   { key: "estimateReference", label: "Est. Ref", editable: "text" },
   {
     key: "costToClient",
@@ -34,6 +35,7 @@ export const INVOICE_SORT_FIELDS: SortField[] = [
   { key: "costToClient", label: "Cost" },
   { key: "client", label: "Client" },
   { key: "completionStatus", label: "Status" },
+  { key: "paymentStatus", label: "Payment Status" },
   { key: "invoiceNumber", label: "Invoice #" },
 ];
 
@@ -43,6 +45,7 @@ const SEARCH_KEYS: (keyof InvoiceRecord)[] = [
   "property",
   "invoiceNumber",
   "administrativeNotes",
+  "paymentStatus",
 ];
 
 function compareField(
@@ -72,6 +75,12 @@ export default function InvoiceView({
   const { invoices: initialInvoices, isLoading, isError } = useInvoices();
   // local-only mutable state
   const [invoices, setInvoices] = useState<InvoiceRecord[]>(initialInvoices);
+
+  // Seed local state once the fetched data arrives (initialInvoices is `[]`
+  // on the first render while SWR is still loading).
+  useEffect(() => {
+    setInvoices(initialInvoices);
+  }, [initialInvoices]);
 
   const updateRecord = useCallback(
     (id: string, key: string, value: string) => {

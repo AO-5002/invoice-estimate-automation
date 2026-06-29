@@ -2,6 +2,7 @@ package org.example.server.sheets;
 
 import org.example.server.dto.InvoiceRecord;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,25 +11,36 @@ import java.util.List;
  * index. Column order is encoded here and nowhere else — the row-to-DTO parser reads only from
  * this enum, and the A1 read range is derived from it.
  *
- * <p>Assumed sheet layout (columns A..O, in this order). Row 1 is treated as a header and skipped.
+ * <p>Physical sheet layout (columns A..V, in this order). Row 1 is treated as a header and skipped.
+ * {@link #ID}, {@link #PAYMENT_ID}, and {@link #LINK_TO_INVOICE} exist only to anchor the indices
+ * of every other column; they are deliberately not read into the DTO.
  */
 public enum InvoiceColumn {
-    INVOICE_DATE(0),
-    DATE_WORK_COMPLETED(1),
-    PAYMENT_DUE(2),
-    ESTIMATE_REFERENCE(3),
-    INVOICE_NUMBER(4),
-    CLIENT(5),
-    PROPERTY(6),
-    PROJECT_DESCRIPTION(7),
-    COST_TO_CLIENT(8),
-    LABOR_EXPENSE(9),
-    EQUIPMENT_EXPENSE(10),
-    MATERIALS_EXPENSE(11),
-    ADMINISTRATIVE_NOTES(12),
-    COMPLETION_STATUS(13),
-    /** Single cell holding a comma-separated list of service categories. */
-    SERVICE_CATEGORIES(14);
+    /** Column A. Alignment placeholder — kept so later indices stay anchored; not read into the DTO. */
+    ID(0),
+    INVOICE_DATE(1),
+    DATE_WORK_COMPLETED(2),
+    PAYMENT_DUE(3),
+    PAYMENT_STATUS(4),
+    /** Column F. Alignment placeholder — not read into the DTO. */
+    PAYMENT_ID(5),
+    ESTIMATE_REFERENCE(6),
+    INVOICE_NUMBER(7),
+    CLIENT(8),
+    PROPERTY(9),
+    PROJECT_DESCRIPTION(10),
+    COST_TO_CLIENT(11),
+    /** Column M. Alignment placeholder — not read into the DTO. */
+    LINK_TO_INVOICE(12),
+    LABOR_EXPENSE(13),
+    EQUIPMENT_EXPENSE(14),
+    MATERIALS_EXPENSE(15),
+    ADMINISTRATIVE_NOTES(16),
+    COMPLETION_STATUS(17),
+    EXCAVATION(18),
+    PLUMBING(19),
+    REMODELING(20),
+    TREE_TRIMMING(21);
 
     private final int index;
 
@@ -52,6 +64,7 @@ public enum InvoiceColumn {
                 INVOICE_DATE.from(row),
                 DATE_WORK_COMPLETED.from(row),
                 PAYMENT_DUE.from(row),
+                PAYMENT_STATUS.from(row),
                 ESTIMATE_REFERENCE.from(row),
                 INVOICE_NUMBER.from(row),
                 CLIENT.from(row),
@@ -63,16 +76,42 @@ public enum InvoiceColumn {
                 MATERIALS_EXPENSE.from(row),
                 ADMINISTRATIVE_NOTES.from(row),
                 COMPLETION_STATUS.from(row),
-                parseCategories(SERVICE_CATEGORIES.from(row)));
+                parseCategories(row));
     }
 
-    private static List<String> parseCategories(String cell) {
-        if (cell.isEmpty()) {
-            return List.of();
+    /**
+     * Builds the ordered list of checked service categories from the four checkbox columns. Emits
+     * the client's canonical spellings (not the sheet's header text, which contains typos), so the
+     * client can filter on stable names.
+     */
+    private static List<String> parseCategories(List<Object> row) {
+        List<String> categories = new ArrayList<>();
+        if (isChecked(EXCAVATION.from(row))) {
+            categories.add("Excavation");
         }
-        return Arrays.stream(cell.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
+        if (isChecked(PLUMBING.from(row))) {
+            categories.add("Plumbing");
+        }
+        if (isChecked(REMODELING.from(row))) {
+            categories.add("Remodeling");
+        }
+        if (isChecked(TREE_TRIMMING.from(row))) {
+            categories.add("Tree Trimming");
+        }
+        return List.copyOf(categories);
+    }
+
+    /**
+     * A category cell counts as checked when it has a non-empty value that is not a falsy marker.
+     * Handles TRUE/FALSE checkbox cells and "x" marks.
+     */
+    private static boolean isChecked(String cell) {
+        String value = cell.trim();
+        if (value.isEmpty()) {
+            return false;
+        }
+        return !value.equalsIgnoreCase("false")
+                && !value.equalsIgnoreCase("no")
+                && !value.equals("0");
     }
 }

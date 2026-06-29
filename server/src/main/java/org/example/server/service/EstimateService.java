@@ -6,6 +6,7 @@ import org.example.server.sheets.EstimateColumn;
 import org.example.server.sheets.SheetsReader;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -34,11 +35,22 @@ public class EstimateService extends CachingSheetService<EstimateRecord> {
         return rows.stream()
                 .filter(row -> !row.isEmpty())
                 .map(EstimateColumn::parse)
+                // Newest estimateDate first; ISO-8601 strings sort lexicographically.
+                // Blank/null dates are pushed to the bottom rather than parsed.
+                .sorted(Comparator.comparing(
+                        EstimateService::dateKey,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
     }
 
     @Override
     protected String label() {
         return "estimates";
+    }
+
+    /** Returns the estimate date, or null when blank, so blank-dated rows sort last. */
+    private static String dateKey(EstimateRecord record) {
+        String date = record.estimateDate();
+        return (date == null || date.isBlank()) ? null : date;
     }
 }

@@ -13,6 +13,7 @@ public record InvoiceRecord(
         String invoiceDate,
         String dateWorkCompleted,
         String paymentDue,
+        String paymentStatus,
         String estimateReference,
         String invoiceNumber,
         String client,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useEstimates, type EstimateRecord } from "../hooks/useEstimates";
 import RecordTable, { type Column } from "./RecordTable";
 import type { SortSpec, SortField } from "./ActionsBar";
@@ -71,6 +71,12 @@ export default function EstimateView({
   // local-only mutable state
   const [estimates, setEstimates] =
     useState<EstimateRecord[]>(initialEstimates);
+
+  // Seed local state once the fetched data arrives (initialEstimates is `[]`
+  // on the first render while SWR is still loading).
+  useEffect(() => {
+    setEstimates(initialEstimates);
+  }, [initialEstimates]);
 
   const updateRecord = useCallback(
     (id: string, key: string, value: string) => {
