@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { mutate } from "swr";
 import { useInvoices, type InvoiceRecord } from "../hooks/useInvoices";
 import RecordTable, { type Column } from "./RecordTable";
 import type { SortSpec, SortField } from "./ActionsBar";
 import { compareDates, formatCurrency, parseCurrencyAmount } from "../lib/format";
+import { patchJSON } from "../lib/fetcher";
 
 export const INVOICE_COLUMNS: Column<InvoiceRecord>[] = [
+  { key: "id", label: "ID" },
   { key: "invoiceNumber", label: "Invoice #", editable: "text" },
   { key: "client", label: "Client", editable: "text" },
   { key: "invoiceDate", label: "Invoice Date", editable: "date" },
@@ -80,18 +83,29 @@ export default function InvoiceView({
     setInvoices(initialInvoices);
   }
 
-  const updateRecord = useCallback(
-    (id: string, key: string, value: string) => {
-      setInvoices((prev) =>
-        prev.map((r) =>
-          r.invoiceNumber === id
-            ? ({ ...r, [key]: value } as InvoiceRecord)
-            : r,
-        ),
-      );
-    },
-    [],
-  );
+  const [editError, setEditError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!editError) return;
+    const t = setTimeout(() => setEditError(null), 3000);
+    return () => clearTimeout(t);
+  }, [editError]);
+
+  const updateRecord = useCallback((id: string, key: string, value: string) => {
+    // Optimistically apply the edit locally...
+    setInvoices((prev) =>
+      prev.map((r) =>
+        r.id === id ? ({ ...r, [key]: value } as InvoiceRecord) : r,
+      ),
+    );
+    // ...then persist that single cell. Revalidate on success; on failure
+    // revalidate too (restoring the server's truth) and surface the error.
+    patchJSON(`/api/invoices/${id}`, { key, value })
+      .then(() => mutate("/api/invoices"))
+      .catch(() => {
+        setEditError("Failed to save change. Reverting.");
+        mutate("/api/invoices");
+      });
+  }, []);
 
   const processedData = useMemo(() => {
     let result = invoices;
@@ -118,16 +132,26 @@ export default function InvoiceView({
   }, [hiddenColumns]);
 
   return (
-    <RecordTable<InvoiceRecord>
-      columns={visibleColumns}
-      data={processedData}
-      isLoading={isLoading}
-      isError={isError}
-      emptyMessage="No invoices yet"
-      errorMessage="Failed to load invoices. Please try again later."
-      locked={locked}
-      identifierKey="invoiceNumber"
-      onCellEdit={updateRecord}
-    />
+    <>
+      <RecordTable<InvoiceRecord>
+        columns={visibleColumns}
+        data={processedData}
+        isLoading={isLoading}
+        isError={isError}
+        emptyMessage="No invoices yet"
+        errorMessage="Failed to load invoices. Please try again later."
+        locked={locked}
+        identifierKey="id"
+        onCellEdit={updateRecord}
+      />
+      {editError && (
+        <div
+          role="alert"
+          className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 rounded-[8px] border border-[#313131] bg-[#232323] px-4 py-2 text-[13px] text-[#FFA5CB] shadow-lg"
+        >
+          {editError}
+        </div>
+      )}
+    </>
   );
 }

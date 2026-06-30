@@ -1,6 +1,7 @@
 package org.example.server.controller;
 
 import org.example.server.dto.ApiError;
+import org.example.server.service.InvoiceNotFoundException;
 import org.example.server.sheets.SheetsUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,5 +25,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(ApiError.of(HttpStatus.SERVICE_UNAVAILABLE.value(), "Sheets Unavailable",
                         "Could not retrieve data from Google Sheets. Please try again shortly."));
+    }
+
+    /** Write targeted an unknown invoice id → 404 Not Found. */
+    @ExceptionHandler(InvoiceNotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(InvoiceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage()));
+    }
+
+    /** Bad client input (e.g. an unknown update field key) → 400 Bad Request. */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleBadRequest(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.of(HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage()));
     }
 }

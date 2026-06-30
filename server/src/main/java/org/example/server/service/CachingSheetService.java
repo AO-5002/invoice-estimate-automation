@@ -57,6 +57,18 @@ public abstract class CachingSheetService<T> {
         }
     }
 
+    /**
+     * Drops the cached list so the next {@link #get()} re-reads from Google Sheets. Call after any
+     * write so callers immediately see their change rather than stale cached data.
+     */
+    public void evict() {
+        synchronized (refreshLock) {
+            cache = null;
+            fetchedAtMillis = 0L;
+            log.info("Cache evicted for {}.", label());
+        }
+    }
+
     private boolean isFresh(List<T> current) {
         return current != null && age() < ttlMillis;
     }

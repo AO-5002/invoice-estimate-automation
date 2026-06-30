@@ -6,7 +6,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * Allows the Next.js dev client (configurable origin, default http://localhost:3000) to call the
- * read-only API endpoints from the browser.
+ * API endpoints from the browser — reads (GET) plus the invoice write path (POST append, PATCH
+ * single-cell update). DELETE is intentionally not permitted.
  */
 @Configuration
 public class WebCorsConfig implements WebMvcConfigurer {
@@ -21,6 +22,6 @@ public class WebCorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
                 .allowedOrigins(props.getCors().getAllowedOrigin())
-                .allowedMethods("GET", "OPTIONS");
+                .allowedMethods("GET", "POST", "PATCH", "OPTIONS");
     }
 }

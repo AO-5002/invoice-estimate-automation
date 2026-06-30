@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { mutate } from "swr";
 import { Check, FileText, Bot } from "lucide-react";
 import Modal from "./Modal";
 import { KNOWN_CLIENTS } from "../config/ClientConfig";
+import { postJSON } from "../lib/fetcher";
 
 const SERVICE_CATEGORIES = [
   "Excavation",
@@ -48,6 +50,33 @@ interface EstimateFormData {
 }
 
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+/**
+ * Maps the invoice form to the server's append payload. Deliberately omits `email`
+ * (EMAIL-ONLY / NON-SHEET) and `clientSelection` (a UI-only field); `paymentStatus` is
+ * server-set to PENDING and so is not sent.
+ */
+function toInvoicePayload(form: InvoiceFormData) {
+  return {
+    invoiceDate: form.invoiceDate,
+    dateWorkCompleted: form.dateWorkCompleted,
+    paymentDue: form.paymentDue,
+    estimateReference: form.estimateReference,
+    invoiceNumber: form.invoiceNumber,
+    client: form.client,
+    property: form.property,
+    projectDescription: form.projectDescription,
+    costToClient: form.costToClient,
+    laborExpense: form.laborExpense,
+    equipmentExpense: form.equipmentExpense,
+    materialsExpense: form.materialsExpense,
+    administrativeNotes: form.administrativeNotes,
+    completionStatus: form.completionStatus,
+    serviceCategories: form.serviceCategories,
+  };
+}
+
+type InvoicePayload = ReturnType<typeof toInvoicePayload>;
 
 const INITIAL_FORM: InvoiceFormData = {
   invoiceDate: new Date().toISOString().split("T")[0],
@@ -210,6 +239,9 @@ export default function CreateRecordModal({
             setStep(
               recordType === "estimate" ? "estimate-form" : "invoice-form",
             )
+          }
+          invoicePayload={
+            recordType === "invoice" ? toInvoicePayload(form) : undefined
           }
           onComplete={() => setStep("success")}
           onSendWithAgent={
@@ -832,24 +864,40 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 function ReviewStep({
   recordType,
   items,
+  invoicePayload,
   onBack,
   onComplete,
   onSendWithAgent,
 }: {
   recordType: RecordType;
   items: { label: string; value: string }[];
+  invoicePayload?: InvoicePayload;
   onBack: () => void;
   onComplete: () => void;
   onSendWithAgent?: () => void;
 }) {
-  function handleComplete() {
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  async function handleComplete() {
     if (recordType === "estimate") {
-      // TODO: Save estimate record to Google Sheets backend
-    } else {
-      // TODO: Save invoice record to Google Sheets backend
+      // TODO: Save estimate record to Google Sheets backend (append not yet implemented).
+      onComplete();
+      return;
     }
-    // NOTE: email is EMAIL-ONLY / NON-SHEET — omit it from the record payload sent to Sheets.
-    onComplete();
+    if (!invoicePayload) return;
+
+    // NOTE: email is EMAIL-ONLY / NON-SHEET — invoicePayload already omits it (and clientSelection).
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await postJSON("/api/invoices/append", invoicePayload);
+      await mutate("/api/invoices");
+      onComplete();
+    } catch {
+      setSubmitError("Failed to save the invoice. Please try again.");
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -864,6 +912,12 @@ function ReviewStep({
         ))}
       </div>
 
+      {submitError && (
+        <p role="alert" className="text-[13px] text-[#FFA5CB]">
+          {submitError}
+        </p>
+      )}
+
       <div className="flex items-center justify-between border-t border-[#313131] pt-4">
         <button
           onClick={onBack}
@@ -874,16 +928,17 @@ function ReviewStep({
         <div className="flex gap-3">
           <button
             onClick={handleComplete}
-            className="flex items-center gap-2 rounded-[8px] bg-[#7987FF] px-5 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
+            disabled={submitting}
+            className="flex items-center gap-2 rounded-[8px] bg-[#7987FF] px-5 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Check className="size-4" />
-            Complete
+            {submitting ? "Saving…" : "Complete"}
           </button>
           <button
-            disabled={!onSendWithAgent}
+            disabled={!onSendWithAgent || submitting}
             onClick={onSendWithAgent}
             className={`flex items-center gap-2 rounded-[8px] border border-[#313131] bg-[#1e1e1e] px-5 py-2 text-[13px] font-medium ${
-              onSendWithAgent
+              onSendWithAgent && !submitting
                 ? "text-white transition-colors hover:border-[#7987FF]"
                 : "text-[#989898] opacity-50 cursor-not-allowed"
             }`}

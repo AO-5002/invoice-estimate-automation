@@ -3,6 +3,8 @@ import type { EstimateRecord } from "../hooks/useEstimates";
 
 export const DUMMY_INVOICES: InvoiceRecord[] = [
   {
+    id: "dummy-001",
+
     invoiceDate: "2025-09-05",
     dateWorkCompleted: "2025-09-03",
     paymentDue: "2025-10-05",
@@ -20,6 +22,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Remodeling"],
   },
   {
+    id: "dummy-002",
+
     invoiceDate: "2025-09-12",
     dateWorkCompleted: "2025-09-10",
     paymentDue: "2025-10-12",
@@ -37,6 +41,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Plumbing"],
   },
   {
+    id: "dummy-003",
+
     invoiceDate: "2025-09-20",
     dateWorkCompleted: "",
     paymentDue: "2025-10-20",
@@ -54,6 +60,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Tree Trimming"],
   },
   {
+    id: "dummy-004",
+
     invoiceDate: "2025-10-01",
     dateWorkCompleted: "2025-09-28",
     paymentDue: "2025-11-01",
@@ -71,6 +79,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Excavation"],
   },
   {
+    id: "dummy-005",
+
     invoiceDate: "2025-10-08",
     dateWorkCompleted: "",
     paymentDue: "2025-11-08",
@@ -88,6 +98,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Plumbing", "Remodeling"],
   },
   {
+    id: "dummy-006",
+
     invoiceDate: "2025-10-15",
     dateWorkCompleted: "2025-10-14",
     paymentDue: "2025-11-15",
@@ -105,6 +117,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Tree Trimming"],
   },
   {
+    id: "dummy-007",
+
     invoiceDate: "2025-10-22",
     dateWorkCompleted: "",
     paymentDue: "2025-11-22",
@@ -122,6 +136,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Excavation", "Plumbing"],
   },
   {
+    id: "dummy-008",
+
     invoiceDate: "2025-11-02",
     dateWorkCompleted: "2025-10-30",
     paymentDue: "2025-12-02",
@@ -139,6 +155,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Remodeling"],
   },
   {
+    id: "dummy-009",
+
     invoiceDate: "2025-11-10",
     dateWorkCompleted: "",
     paymentDue: "2025-12-10",
@@ -156,6 +174,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Excavation", "Plumbing"],
   },
   {
+    id: "dummy-010",
+
     invoiceDate: "2025-11-18",
     dateWorkCompleted: "2025-11-16",
     paymentDue: "2025-12-18",
@@ -173,6 +193,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Tree Trimming"],
   },
   {
+    id: "dummy-011",
+
     invoiceDate: "2025-11-25",
     dateWorkCompleted: "",
     paymentDue: "2025-12-25",
@@ -190,6 +212,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Remodeling", "Plumbing"],
   },
   {
+    id: "dummy-012",
+
     invoiceDate: "2025-12-01",
     dateWorkCompleted: "2025-11-29",
     paymentDue: "2026-01-01",
@@ -207,6 +231,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Excavation"],
   },
   {
+    id: "dummy-013",
+
     invoiceDate: "2025-12-08",
     dateWorkCompleted: "",
     paymentDue: "2026-01-08",
@@ -224,6 +250,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Plumbing"],
   },
   {
+    id: "dummy-014",
+
     invoiceDate: "2025-12-15",
     dateWorkCompleted: "2025-12-13",
     paymentDue: "2026-01-15",
@@ -241,6 +269,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Tree Trimming"],
   },
   {
+    id: "dummy-015",
+
     invoiceDate: "2026-01-05",
     dateWorkCompleted: "",
     paymentDue: "2026-02-05",
@@ -258,6 +288,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Excavation"],
   },
   {
+    id: "dummy-016",
+
     invoiceDate: "2026-01-12",
     dateWorkCompleted: "2026-01-10",
     paymentDue: "2026-02-12",
@@ -275,6 +307,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Plumbing"],
   },
   {
+    id: "dummy-017",
+
     invoiceDate: "2026-01-20",
     dateWorkCompleted: "",
     paymentDue: "2026-02-20",
@@ -292,6 +326,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Remodeling", "Plumbing"],
   },
   {
+    id: "dummy-018",
+
     invoiceDate: "2026-02-01",
     dateWorkCompleted: "2026-01-28",
     paymentDue: "2026-03-01",
@@ -309,6 +345,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Tree Trimming"],
   },
   {
+    id: "dummy-019",
+
     invoiceDate: "2026-02-10",
     dateWorkCompleted: "",
     paymentDue: "2026-03-10",
@@ -326,6 +364,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Plumbing", "Remodeling"],
   },
   {
+    id: "dummy-020",
+
     invoiceDate: "2026-02-18",
     dateWorkCompleted: "2026-02-16",
     paymentDue: "2026-03-18",
@@ -343,6 +383,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Excavation"],
   },
   {
+    id: "dummy-021",
+
     invoiceDate: "2026-03-01",
     dateWorkCompleted: "",
     paymentDue: "2026-04-01",
@@ -360,6 +402,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Remodeling", "Excavation"],
   },
   {
+    id: "dummy-022",
+
     invoiceDate: "2026-03-10",
     dateWorkCompleted: "2026-03-08",
     paymentDue: "2026-04-10",
@@ -377,6 +421,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Plumbing"],
   },
   {
+    id: "dummy-023",
+
     invoiceDate: "2026-03-18",
     dateWorkCompleted: "",
     paymentDue: "2026-04-18",
@@ -394,6 +440,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Excavation"],
   },
   {
+    id: "dummy-024",
+
     invoiceDate: "2026-04-02",
     dateWorkCompleted: "2026-03-30",
     paymentDue: "2026-05-02",
@@ -411,6 +459,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
     serviceCategories: ["Plumbing"],
   },
   {
+    id: "dummy-025",
+
     invoiceDate: "2026-04-10",
     dateWorkCompleted: "",
     paymentDue: "2026-05-10",

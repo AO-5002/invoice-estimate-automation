@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  Copy,
-  Trash2,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, Copy } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
@@ -315,14 +309,6 @@ export default function RecordTable<T extends object>({
           >
             <Copy className="size-3.5" />
             Duplicate
-          </button>
-          <div className="my-1 border-t border-[#313131]" />
-          <button
-            onClick={handleMenuAction}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-[#FFA5CB] transition-colors hover:bg-[#1e1e1e]"
-          >
-            <Trash2 className="size-3.5" />
-            Delete
           </button>
         </div>
       )}

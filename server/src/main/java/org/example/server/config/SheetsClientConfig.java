@@ -35,7 +35,7 @@ public class SheetsClientConfig {
     @Bean
     public Sheets sheetsClient(AppProperties props) throws IOException, GeneralSecurityException {
         GoogleCredentials credentials = loadCredentials(props.getGoogle())
-                .createScoped(List.of(SheetsScopes.SPREADSHEETS_READONLY));
+                .createScoped(List.of(SheetsScopes.SPREADSHEETS));
 
         HttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
         return new Sheets.Builder(transport, GsonFactory.getDefaultInstance(),

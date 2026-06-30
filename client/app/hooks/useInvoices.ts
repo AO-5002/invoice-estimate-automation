@@ -2,6 +2,8 @@ import useSWR from "swr";
 import { fetcher } from "../lib/fetcher";
 
 export interface InvoiceRecord {
+  // Stable primary key (column A), server-generated on append. Used to target updates.
+  id: string;
   invoiceDate: string;
   dateWorkCompleted: string;
   paymentDue: string;
