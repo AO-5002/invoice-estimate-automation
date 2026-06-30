@@ -6,8 +6,12 @@ package org.example.server.dto;
  *
  * <p>NOTE: {@code email} is intentionally absent — it is an email-only / non-sheet field on the
  * client and must never be read from or returned by this API.
+ *
+ * <p>{@code id} is the stable primary key, read from column A. It is server-owned (generated on
+ * append) and used to locate the physical row for single-cell updates.
  */
 public record EstimateRecord(
+        String id,
         String estimateNumber,
         String estimateDate,
         String client,

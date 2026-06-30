@@ -78,6 +78,26 @@ function toInvoicePayload(form: InvoiceFormData) {
 
 type InvoicePayload = ReturnType<typeof toInvoicePayload>;
 
+/**
+ * Maps the estimate form to the server's append payload. Deliberately omits `email`
+ * (EMAIL-ONLY / NON-SHEET) and `clientSelection` (a UI-only field); `approved` comes straight
+ * from the form (no server-forced status).
+ */
+function toEstimatePayload(form: EstimateFormData) {
+  return {
+    estimateNumber: form.estimateNumber,
+    estimateDate: form.estimateDate,
+    client: form.client,
+    property: form.property,
+    projectDescription: form.projectDescription,
+    costToClient: form.costToClient,
+    approved: form.approved,
+    administrativeNotes: form.administrativeNotes,
+  };
+}
+
+type EstimatePayload = ReturnType<typeof toEstimatePayload>;
+
 const INITIAL_FORM: InvoiceFormData = {
   invoiceDate: new Date().toISOString().split("T")[0],
   dateWorkCompleted: "",
@@ -242,6 +262,11 @@ export default function CreateRecordModal({
           }
           invoicePayload={
             recordType === "invoice" ? toInvoicePayload(form) : undefined
+          }
+          estimatePayload={
+            recordType === "estimate"
+              ? toEstimatePayload(estimateForm)
+              : undefined
           }
           onComplete={() => setStep("success")}
           onSendWithAgent={
@@ -865,6 +890,7 @@ function ReviewStep({
   recordType,
   items,
   invoicePayload,
+  estimatePayload,
   onBack,
   onComplete,
   onSendWithAgent,
@@ -872,6 +898,7 @@ function ReviewStep({
   recordType: RecordType;
   items: { label: string; value: string }[];
   invoicePayload?: InvoicePayload;
+  estimatePayload?: EstimatePayload;
   onBack: () => void;
   onComplete: () => void;
   onSendWithAgent?: () => void;
@@ -880,22 +907,23 @@ function ReviewStep({
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function handleComplete() {
-    if (recordType === "estimate") {
-      // TODO: Save estimate record to Google Sheets backend (append not yet implemented).
-      onComplete();
-      return;
-    }
-    if (!invoicePayload) return;
+    // NOTE: email is EMAIL-ONLY / NON-SHEET — both payloads already omit it (and clientSelection).
+    const isEstimate = recordType === "estimate";
+    const path = isEstimate ? "/api/estimates/append" : "/api/invoices/append";
+    const key = isEstimate ? "/api/estimates" : "/api/invoices";
+    const payload = isEstimate ? estimatePayload : invoicePayload;
+    if (!payload) return;
 
-    // NOTE: email is EMAIL-ONLY / NON-SHEET — invoicePayload already omits it (and clientSelection).
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await postJSON("/api/invoices/append", invoicePayload);
-      await mutate("/api/invoices");
+      await postJSON(path, payload);
+      await mutate(key);
       onComplete();
     } catch {
-      setSubmitError("Failed to save the invoice. Please try again.");
+      setSubmitError(
+        `Failed to save the ${isEstimate ? "estimate" : "invoice"}. Please try again.`,
+      );
       setSubmitting(false);
     }
   }

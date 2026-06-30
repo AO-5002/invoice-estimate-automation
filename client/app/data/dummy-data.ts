@@ -481,6 +481,8 @@ export const DUMMY_INVOICES: InvoiceRecord[] = [
 
 export const DUMMY_ESTIMATES: EstimateRecord[] = [
   {
+    id: "dummy-est-001",
+
     estimateNumber: "EST-001",
     estimateDate: "2025-08-28",
     client: "EL PAISANO",
@@ -491,6 +493,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "Client prefers granite",
   },
   {
+    id: "dummy-est-002",
+
     estimateNumber: "EST-002",
     estimateDate: "2025-09-05",
     client: "STONEGATE",
@@ -501,6 +505,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "",
   },
   {
+    id: "dummy-est-003",
+
     estimateNumber: "EST-003",
     estimateDate: "2025-09-10",
     client: "NORTH BLUFF ESTATES",
@@ -511,6 +517,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "City permit needed",
   },
   {
+    id: "dummy-est-004",
+
     estimateNumber: "EST-004",
     estimateDate: "2025-09-18",
     client: "CEDAR HEIGHTS",
@@ -521,6 +529,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "",
   },
   {
+    id: "dummy-est-005",
+
     estimateNumber: "EST-005",
     estimateDate: "2025-09-25",
     client: "EL PAISANO",
@@ -531,6 +541,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "Follow-up to kitchen remodel",
   },
   {
+    id: "dummy-est-006",
+
     estimateNumber: "EST-006",
     estimateDate: "2025-10-02",
     client: "RIVER VALLEY HOMES",
@@ -541,6 +553,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "",
   },
   {
+    id: "dummy-est-007",
+
     estimateNumber: "EST-007",
     estimateDate: "2025-10-10",
     client: "MARTINEZ FAMILY",
@@ -551,6 +565,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "Waiting on county permits",
   },
   {
+    id: "dummy-est-008",
+
     estimateNumber: "EST-008",
     estimateDate: "2025-10-18",
     client: "STONEGATE",
@@ -561,6 +577,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "Over budget — may revisit Q1",
   },
   {
+    id: "dummy-est-009",
+
     estimateNumber: "EST-009",
     estimateDate: "2025-10-28",
     client: "NORTH BLUFF ESTATES",
@@ -571,6 +589,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "",
   },
   {
+    id: "dummy-est-010",
+
     estimateNumber: "EST-010",
     estimateDate: "2025-11-05",
     client: "CEDAR HEIGHTS",
@@ -581,6 +601,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "",
   },
   {
+    id: "dummy-est-011",
+
     estimateNumber: "EST-011",
     estimateDate: "2025-11-12",
     client: "RIVER VALLEY HOMES",
@@ -591,6 +613,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "Tile selection pending",
   },
   {
+    id: "dummy-est-012",
+
     estimateNumber: "EST-012",
     estimateDate: "2025-11-20",
     client: "MARTINEZ FAMILY",
@@ -601,6 +625,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "",
   },
   {
+    id: "dummy-est-013",
+
     estimateNumber: "EST-013",
     estimateDate: "2025-11-28",
     client: "EL PAISANO",
@@ -611,6 +637,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "",
   },
   {
+    id: "dummy-est-014",
+
     estimateNumber: "EST-014",
     estimateDate: "2025-12-05",
     client: "STONEGATE",
@@ -621,6 +649,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "Going with different vendor",
   },
   {
+    id: "dummy-est-015",
+
     estimateNumber: "EST-015",
     estimateDate: "2025-12-15",
     client: "NORTH BLUFF ESTATES",
@@ -631,6 +661,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "HOA review in progress",
   },
   {
+    id: "dummy-est-016",
+
     estimateNumber: "EST-016",
     estimateDate: "2026-01-03",
     client: "CEDAR HEIGHTS",
@@ -641,6 +673,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "",
   },
   {
+    id: "dummy-est-017",
+
     estimateNumber: "EST-017",
     estimateDate: "2026-01-10",
     client: "RIVER VALLEY HOMES",
@@ -651,6 +685,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "Phased approach agreed",
   },
   {
+    id: "dummy-est-018",
+
     estimateNumber: "EST-018",
     estimateDate: "2026-01-22",
     client: "MARTINEZ FAMILY",
@@ -661,6 +697,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "Client postponed to fall",
   },
   {
+    id: "dummy-est-019",
+
     estimateNumber: "EST-019",
     estimateDate: "2026-02-01",
     client: "EL PAISANO",
@@ -671,6 +709,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "Gas line sub needed",
   },
   {
+    id: "dummy-est-020",
+
     estimateNumber: "EST-020",
     estimateDate: "2026-02-10",
     client: "STONEGATE",
@@ -681,6 +721,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "",
   },
   {
+    id: "dummy-est-021",
+
     estimateNumber: "EST-021",
     estimateDate: "2026-02-20",
     client: "NORTH BLUFF ESTATES",
@@ -691,6 +733,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "HOA board approval received",
   },
   {
+    id: "dummy-est-022",
+
     estimateNumber: "EST-022",
     estimateDate: "2026-03-02",
     client: "CEDAR HEIGHTS",
@@ -701,6 +745,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "",
   },
   {
+    id: "dummy-est-023",
+
     estimateNumber: "EST-023",
     estimateDate: "2026-03-12",
     client: "RIVER VALLEY HOMES",
@@ -711,6 +757,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "Soil report pending",
   },
   {
+    id: "dummy-est-024",
+
     estimateNumber: "EST-024",
     estimateDate: "2026-03-25",
     client: "MARTINEZ FAMILY",
@@ -721,6 +769,8 @@ export const DUMMY_ESTIMATES: EstimateRecord[] = [
     administrativeNotes: "",
   },
   {
+    id: "dummy-est-025",
+
     estimateNumber: "EST-025",
     estimateDate: "2026-04-05",
     client: "EL PAISANO",

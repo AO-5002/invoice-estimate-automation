@@ -1,6 +1,7 @@
 package org.example.server.controller;
 
 import org.example.server.dto.ApiError;
+import org.example.server.service.EstimateNotFoundException;
 import org.example.server.service.InvoiceNotFoundException;
 import org.example.server.sheets.SheetsUnavailableException;
 import org.slf4j.Logger;
@@ -30,6 +31,13 @@ public class GlobalExceptionHandler {
     /** Write targeted an unknown invoice id → 404 Not Found. */
     @ExceptionHandler(InvoiceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(InvoiceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage()));
+    }
+
+    /** Write targeted an unknown estimate id → 404 Not Found. */
+    @ExceptionHandler(EstimateNotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(EstimateNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiError.of(HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage()));
     }

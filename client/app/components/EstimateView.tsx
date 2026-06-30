@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { mutate } from "swr";
 import { useEstimates, type EstimateRecord } from "../hooks/useEstimates";
 import RecordTable, { type Column } from "./RecordTable";
 import type { SortSpec, SortField } from "./ActionsBar";
 import { compareDates, formatCurrency, parseCurrencyAmount } from "../lib/format";
+import { patchJSON } from "../lib/fetcher";
 
 export const ESTIMATE_COLUMNS: Column<EstimateRecord>[] = [
+  { key: "id", label: "ID" },
   { key: "estimateNumber", label: "Estimate #", editable: "text" },
   { key: "estimateDate", label: "Date Sent to Client", editable: "date" },
   { key: "client", label: "Client", editable: "text" },
@@ -78,18 +81,29 @@ export default function EstimateView({
     setEstimates(initialEstimates);
   }
 
-  const updateRecord = useCallback(
-    (id: string, key: string, value: string) => {
-      setEstimates((prev) =>
-        prev.map((r) =>
-          r.estimateNumber === id
-            ? ({ ...r, [key]: value } as EstimateRecord)
-            : r,
-        ),
-      );
-    },
-    [],
-  );
+  const [editError, setEditError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!editError) return;
+    const t = setTimeout(() => setEditError(null), 3000);
+    return () => clearTimeout(t);
+  }, [editError]);
+
+  const updateRecord = useCallback((id: string, key: string, value: string) => {
+    // Optimistically apply the edit locally...
+    setEstimates((prev) =>
+      prev.map((r) =>
+        r.id === id ? ({ ...r, [key]: value } as EstimateRecord) : r,
+      ),
+    );
+    // ...then persist that single cell. Revalidate on success; on failure
+    // revalidate too (restoring the server's truth) and surface the error.
+    patchJSON(`/api/estimates/${id}`, { key, value })
+      .then(() => mutate("/api/estimates"))
+      .catch(() => {
+        setEditError("Failed to save change. Reverting.");
+        mutate("/api/estimates");
+      });
+  }, []);
 
   const processedData = useMemo(() => {
     let result = estimates;
@@ -116,16 +130,26 @@ export default function EstimateView({
   }, [hiddenColumns]);
 
   return (
-    <RecordTable<EstimateRecord>
-      columns={visibleColumns}
-      data={processedData}
-      isLoading={isLoading}
-      isError={isError}
-      emptyMessage="No estimates yet"
-      errorMessage="Failed to load estimates. Please try again later."
-      locked={locked}
-      identifierKey="estimateNumber"
-      onCellEdit={updateRecord}
-    />
+    <>
+      <RecordTable<EstimateRecord>
+        columns={visibleColumns}
+        data={processedData}
+        isLoading={isLoading}
+        isError={isError}
+        emptyMessage="No estimates yet"
+        errorMessage="Failed to load estimates. Please try again later."
+        locked={locked}
+        identifierKey="id"
+        onCellEdit={updateRecord}
+      />
+      {editError && (
+        <div
+          role="alert"
+          className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 rounded-[8px] border border-[#313131] bg-[#232323] px-4 py-2 text-[13px] text-[#FFA5CB] shadow-lg"
+        >
+          {editError}
+        </div>
+      )}
+    </>
   );
 }
