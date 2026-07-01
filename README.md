@@ -67,3 +67,8 @@ I built a streamlined agentic pipeline that creates, sends, and stores invoices 
 - **Agent:** LangGraph / LangChain, runs the pipeline that generates, sends, and logs each invoice or estimate
 - **Storage:** Cloudflare R2, holds the generated PDFs and version history
 - **Payment Log:** Stripe, tracks payment status and reconciles what has come through
+
+## Agentic Workflow
+
+![Agent Flow](Agentic%20Flow.png)
+
