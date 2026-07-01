@@ -35,13 +35,16 @@ public class EstimateService extends CachingSheetService<EstimateRecord> {
     }
 
     /**
-     * Appends a new estimate row with a freshly generated {@code id} (and {@code approved} taken
+     * Adds a new estimate row with a freshly generated {@code id} (and {@code approved} taken
      * straight from the request — no server-forced status), then evicts the cache so the next read
      * reflects it. Returns the created record.
+     *
+     * <p>Unlike invoices (which append at the bottom), estimates are inserted at the TOP — the new
+     * row becomes row 2, directly under the header, shifting existing rows down.
      */
     public EstimateRecord append(EstimateCreateRequest request) {
         String id = UUID.randomUUID().toString();
-        writer.appendAtEnd(props.getSheets().getEstimatesTab(), EstimateColumn.toRow(request, id));
+        writer.insertAtTop(props.getSheets().getEstimatesTab(), EstimateColumn.toRow(request, id));
         evict();
         return new EstimateRecord(
                 id,
