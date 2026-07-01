@@ -1,6 +1,6 @@
 # Invoice & Estimate Automation
 
-A full stack application that automates invoice and estimate generation, tracks payment status, streamlines PDF storage, and handles automated email delivery and tracking.
+## A full stack application that automates invoice and estimate generation, tracks payment status, streamlines PDF storage, and handles automated email delivery and tracking.
 ---
 ## The Issue
 
