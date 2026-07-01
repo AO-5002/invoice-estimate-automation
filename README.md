@@ -70,5 +70,5 @@ I built a streamlined agentic pipeline that creates, sends, and stores invoices 
 
 ## Agentic Workflow
 
-![Agent Flow](Agentic%20Flow.png)
+![Agent Flow](agentic_flow.png)
 
