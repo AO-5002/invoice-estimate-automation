@@ -143,6 +143,7 @@ export default function InvoiceView({
         locked={locked}
         identifierKey="id"
         onCellEdit={updateRecord}
+        pdfPath={(id) => `/api/invoices/${id}/pdf`}
       />
       {editError && (
         <div

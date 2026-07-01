@@ -16,6 +16,18 @@ export async function fetcher<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** Fetch a binary resource (e.g. a generated PDF) and return it as a Blob. Throws on a non-OK status. */
+export async function fetchBlob(path: string): Promise<Blob> {
+  const url = resolve(path);
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    throw new Error(`Request to ${url} failed with status ${res.status}`);
+  }
+
+  return res.blob();
+}
+
 /** POST a JSON body and parse the JSON response. Throws on a non-OK status. */
 export async function postJSON<T>(path: string, body: unknown): Promise<T> {
   const url = resolve(path);

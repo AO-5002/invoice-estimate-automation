@@ -35,6 +35,19 @@ public class EstimateService extends CachingSheetService<EstimateRecord> {
     }
 
     /**
+     * Resolves the full estimate record for {@code id} from the cached list (same source the list
+     * endpoint serves), for read-only consumers such as PDF generation.
+     *
+     * @throws EstimateNotFoundException if no row has the given {@code id}.
+     */
+    public EstimateRecord findById(String id) {
+        return get().stream()
+                .filter(record -> record.id().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new EstimateNotFoundException(id));
+    }
+
+    /**
      * Adds a new estimate row with a freshly generated {@code id} (and {@code approved} taken
      * straight from the request — no server-forced status), then evicts the cache so the next read
      * reflects it. Returns the created record.

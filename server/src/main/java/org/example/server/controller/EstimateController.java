@@ -6,7 +6,12 @@ import org.example.server.dto.EstimateCellUpdate;
 import org.example.server.dto.EstimateCreateRequest;
 import org.example.server.dto.EstimateRecord;
 import org.example.server.service.EstimateService;
+import org.example.server.service.PdfService;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,9 +29,11 @@ import java.util.List;
 public class EstimateController {
 
     private final EstimateService estimateService;
+    private final PdfService pdfService;
 
-    public EstimateController(EstimateService estimateService) {
+    public EstimateController(EstimateService estimateService, PdfService pdfService) {
         this.estimateService = estimateService;
+        this.pdfService = pdfService;
     }
 
     @GetMapping
@@ -57,5 +64,22 @@ public class EstimateController {
                     + "(body: { key, value }) to the sheet, leaving the rest of the row untouched.")
     public void updateCell(@PathVariable String id, @RequestBody EstimateCellUpdate update) {
         estimateService.updateField(id, update.key(), update.value());
+    }
+
+    @GetMapping("/{id}/pdf")
+    @Operation(
+            summary = "Generate an estimate PDF",
+            description = "Resolves the estimate for the given id, renders it into an HTML template, "
+                    + "and streams back a generated PDF as an attachment. The PDF is not persisted. "
+                    + "Returns 404 if no estimate has the id.")
+    public ResponseEntity<byte[]> estimatePdf(@PathVariable String id) {
+        EstimateRecord record = estimateService.findById(id);
+        byte[] pdf = pdfService.estimatePdf(id);
+        String filename = "estimate-" + PdfFilenames.slug(record.estimateNumber(), id) + ".pdf";
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(filename).build().toString())
+                .body(pdf);
     }
 }

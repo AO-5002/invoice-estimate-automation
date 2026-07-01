@@ -6,7 +6,12 @@ import org.example.server.dto.InvoiceCellUpdate;
 import org.example.server.dto.InvoiceCreateRequest;
 import org.example.server.dto.InvoiceRecord;
 import org.example.server.service.InvoiceService;
+import org.example.server.service.PdfService;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,9 +29,11 @@ import java.util.List;
 public class InvoiceController {
 
     private final InvoiceService invoiceService;
+    private final PdfService pdfService;
 
-    public InvoiceController(InvoiceService invoiceService) {
+    public InvoiceController(InvoiceService invoiceService, PdfService pdfService) {
         this.invoiceService = invoiceService;
+        this.pdfService = pdfService;
     }
 
     @GetMapping
@@ -57,5 +64,22 @@ public class InvoiceController {
                     + "(body: { key, value }) to the sheet, leaving the rest of the row untouched.")
     public void updateCell(@PathVariable String id, @RequestBody InvoiceCellUpdate update) {
         invoiceService.updateField(id, update.key(), update.value());
+    }
+
+    @GetMapping("/{id}/pdf")
+    @Operation(
+            summary = "Generate an invoice PDF",
+            description = "Resolves the invoice for the given id, renders it into an HTML template, "
+                    + "and streams back a generated PDF as an attachment. The PDF is not persisted. "
+                    + "Returns 404 if no invoice has the id.")
+    public ResponseEntity<byte[]> invoicePdf(@PathVariable String id) {
+        InvoiceRecord record = invoiceService.findById(id);
+        byte[] pdf = pdfService.invoicePdf(id);
+        String filename = "invoice-" + PdfFilenames.slug(record.invoiceNumber(), id) + ".pdf";
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(filename).build().toString())
+                .body(pdf);
     }
 }

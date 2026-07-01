@@ -141,6 +141,7 @@ export default function EstimateView({
         locked={locked}
         identifierKey="id"
         onCellEdit={updateRecord}
+        pdfPath={(id) => `/api/estimates/${id}/pdf`}
       />
       {editError && (
         <div

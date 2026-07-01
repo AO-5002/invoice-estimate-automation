@@ -35,6 +35,9 @@
         <!-- springdoc 3.x is the line that targets Spring Boot 4 / Spring Framework 7
              (the 2.8.x line is for Spring Boot 3.x and will not work here). -->
         <springdoc.version>3.0.3</springdoc.version>
+        <!-- HTML->PDF renderer for the PDF endpoints. Pure-Java (PDFBox backend),
+             runs fine on Java 21; version is not managed by the Boot parent so it is pinned here. -->
+        <openhtmltopdf.version>1.0.10</openhtmltopdf.version>
     </properties>
     <dependencies>
         <dependency>
@@ -70,6 +73,18 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc.version}</version>
+        </dependency>
+
+        <!-- Thymeleaf for rendering the invoice/estimate HTML templates (version managed
+             by the Spring Boot parent), plus openhtmltopdf to turn that HTML into PDF bytes. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>${openhtmltopdf.version}</version>
         </dependency>
 
         <dependency>

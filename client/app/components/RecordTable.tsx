@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, FileText, Copy } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Copy,
+  Loader2,
+} from "lucide-react";
+import Modal from "./Modal";
+import { fetchBlob } from "../lib/fetcher";
 
 const PAGE_SIZE = 10;
 
@@ -28,6 +36,7 @@ export default function RecordTable<T extends object>({
   locked = true,
   identifierKey,
   onCellEdit,
+  pdfPath,
 }: {
   columns: Column<T>[];
   data: T[];
@@ -42,7 +51,12 @@ export default function RecordTable<T extends object>({
     columnKey: string,
     value: string,
   ) => void;
+  /** Builds the PDF endpoint for a given row id. When provided, a hover
+   *  action to generate a PDF is rendered in a left gutter column. */
+  pdfPath?: (id: string) => string;
 }) {
+  // The gutter icon needs both a way to build the endpoint and a row id.
+  const showGutter = !!pdfPath && !!identifierKey;
   const [page, setPage] = useState(0);
   const prevLengthRef = useRef(data.length);
   useEffect(() => {
@@ -64,11 +78,18 @@ export default function RecordTable<T extends object>({
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
+    id: string | null;
   } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
-  const [comingSoon, setComingSoon] = useState(false);
-  const comingSoonTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Transient bottom toast, reused for the "coming soon" stub and PDF errors.
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // The row id whose "Generate PDF?" confirm dialog is open, and whether the
+  // PDF request is currently in flight.
+  const [pdfTarget, setPdfTarget] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   if (locked && editingCell !== null) setEditingCell(null);
   if (locked && contextMenu !== null) setContextMenu(null);
@@ -90,15 +111,39 @@ export default function RecordTable<T extends object>({
     };
   }, [contextMenu]);
 
+  function showToast(message: string) {
+    setToast(message);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2000);
+  }
+
   function showComingSoon() {
-    setComingSoon(true);
-    if (comingSoonTimer.current) clearTimeout(comingSoonTimer.current);
-    comingSoonTimer.current = setTimeout(() => setComingSoon(false), 2000);
+    showToast("Coming soon");
   }
 
   function handleMenuAction() {
     setContextMenu(null);
     showComingSoon();
+  }
+
+  function openPdfConfirm(id: string) {
+    setContextMenu(null);
+    setPdfTarget(id);
+  }
+
+  async function handleGeneratePdf() {
+    if (!pdfPath || pdfTarget == null) return;
+    setPdfLoading(true);
+    try {
+      const blob = await fetchBlob(pdfPath(pdfTarget));
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setPdfTarget(null);
+    } catch {
+      showToast("Failed to generate PDF. Please try again.");
+    } finally {
+      setPdfLoading(false);
+    }
   }
 
   const canEdit = !locked && !!onCellEdit && !!identifierKey;
@@ -143,6 +188,7 @@ export default function RecordTable<T extends object>({
           <table className="w-full min-w-[900px]">
             <thead>
               <tr className="border-b border-[#313131]">
+                {showGutter && <th className="w-10 px-2 py-3" />}
                 {columns.map((col) => (
                   <th
                     key={col.key}
@@ -156,6 +202,7 @@ export default function RecordTable<T extends object>({
             <tbody>
               {Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="border-b border-[#313131]/50">
+                  {showGutter && <td className="w-10 px-2 py-3" />}
                   {columns.map((col) => (
                     <td key={col.key} className="px-4 py-3">
                       <div className="h-4 w-20 animate-pulse rounded bg-[#313131]" />
@@ -192,6 +239,7 @@ export default function RecordTable<T extends object>({
         <table className="w-full min-w-[900px]">
           <thead>
             <tr className="border-b border-[#313131]">
+              {showGutter && <th className="w-10 px-2 py-3" />}
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -203,16 +251,32 @@ export default function RecordTable<T extends object>({
             </tr>
           </thead>
           <tbody>
-            {pageData.map((record, i) => (
+            {pageData.map((record, i) => {
+              const rowId = identifierKey
+                ? String(record[identifierKey as keyof T])
+                : null;
+              return (
               <tr
                 key={i}
-                className="border-b border-[#313131]/50 transition-colors hover:bg-[#1e1e1e]"
+                className="group border-b border-[#313131]/50 transition-colors hover:bg-[#1e1e1e]"
                 onContextMenu={(e) => {
                   if (locked) return;
                   e.preventDefault();
-                  setContextMenu({ x: e.clientX, y: e.clientY });
+                  setContextMenu({ x: e.clientX, y: e.clientY, id: rowId });
                 }}
               >
+                {showGutter && (
+                  <td className="w-10 px-2 py-3 align-middle">
+                    <button
+                      type="button"
+                      onClick={() => rowId && openPdfConfirm(rowId)}
+                      aria-label="Generate PDF"
+                      className="flex items-center justify-center text-[#989898] opacity-0 transition group-hover:opacity-100 hover:text-[#7987FF]"
+                    >
+                      <FileText className="size-4" />
+                    </button>
+                  </td>
+                )}
                 {columns.map((col) => (
                   <td
                     key={col.key}
@@ -258,7 +322,8 @@ export default function RecordTable<T extends object>({
                   </td>
                 ))}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -297,7 +362,13 @@ export default function RecordTable<T extends object>({
           }}
         >
           <button
-            onClick={handleMenuAction}
+            onClick={() => {
+              if (showGutter && contextMenu.id) {
+                openPdfConfirm(contextMenu.id);
+              } else {
+                handleMenuAction();
+              }
+            }}
             className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-white/70 transition-colors hover:bg-[#1e1e1e] hover:text-white"
           >
             <FileText className="size-3.5" />
@@ -313,11 +384,40 @@ export default function RecordTable<T extends object>({
         </div>
       )}
 
-      {comingSoon && (
+      {toast && (
         <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 rounded-[8px] border border-[#313131] bg-[#232323] px-4 py-2 text-[13px] text-[#989898] shadow-lg">
-          Coming soon
+          {toast}
         </div>
       )}
+
+      <Modal
+        open={pdfTarget !== null}
+        onClose={() => {
+          if (!pdfLoading) setPdfTarget(null);
+        }}
+        title="Generate PDF"
+      >
+        <p className="text-[14px] leading-[20px] text-[#c9c9c9]">
+          Generate a PDF for this row?
+        </p>
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            onClick={() => setPdfTarget(null)}
+            disabled={pdfLoading}
+            className="rounded-[8px] border border-[#313131] px-4 py-2 text-[13px] text-[#989898] transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleGeneratePdf}
+            disabled={pdfLoading}
+            className="flex items-center gap-2 rounded-[8px] bg-[#7987FF] px-4 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {pdfLoading && <Loader2 className="size-4 animate-spin" />}
+            {pdfLoading ? "Generating…" : "Confirm"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

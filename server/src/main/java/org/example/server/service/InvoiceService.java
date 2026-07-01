@@ -35,6 +35,19 @@ public class InvoiceService extends CachingSheetService<InvoiceRecord> {
     }
 
     /**
+     * Resolves the full invoice record for {@code id} from the cached list (same source the list
+     * endpoint serves), for read-only consumers such as PDF generation.
+     *
+     * @throws InvoiceNotFoundException if no row has the given {@code id}.
+     */
+    public InvoiceRecord findById(String id) {
+        return get().stream()
+                .filter(record -> record.id().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new InvoiceNotFoundException(id));
+    }
+
+    /**
      * Appends a new invoice row with a freshly generated {@code id} and server-set PENDING payment
      * status, then evicts the cache so the next read reflects it. Returns the created record.
      */

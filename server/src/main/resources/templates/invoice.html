@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Invoice</title>
+    <style>
+        /* All CSS is inline here on purpose: openhtmltopdf renders this HTML string with no base
+           URI, so there are no external stylesheets or images to resolve. */
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            color: #1a1a1a;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .header {
+            border-bottom: 2px solid #1a1a1a;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            margin: 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .header .number {
+            font-size: 13px;
+            color: #555555;
+            margin-top: 4px;
+        }
+
+        .meta {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+        }
+
+        .meta td {
+            vertical-align: top;
+            padding: 2px 0;
+        }
+
+        .meta .label {
+            color: #777777;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            width: 130px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #777777;
+            margin: 20px 0 6px 0;
+        }
+
+        .description {
+            white-space: pre-wrap;
+        }
+
+        table.items {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+        }
+
+        table.items th {
+            text-align: left;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #777777;
+            border-bottom: 1px solid #cccccc;
+            padding: 6px 8px;
+        }
+
+        table.items th.amount,
+        table.items td.amount {
+            text-align: right;
+        }
+
+        table.items td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #eeeeee;
+        }
+
+        .totals {
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .totals td {
+            padding: 8px;
+        }
+
+        .totals .total-label {
+            text-align: right;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .totals .total-value {
+            text-align: right;
+            font-size: 18px;
+            font-weight: bold;
+            width: 160px;
+            border-top: 2px solid #1a1a1a;
+        }
+
+        .notes {
+            margin-top: 28px;
+            padding: 12px;
+            background: #f6f6f6;
+            font-size: 11px;
+            color: #333333;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Invoice</h1>
+        <div class="number" th:text="'Invoice #' + ${invoice.invoiceNumber}">Invoice #</div>
+    </div>
+
+    <table class="meta">
+        <tr>
+            <td class="label">Billed To</td>
+            <td th:text="${invoice.client}">Client</td>
+            <td class="label">Invoice Date</td>
+            <td th:text="${invoice.invoiceDate}">Invoice Date</td>
+        </tr>
+        <tr>
+            <td class="label">Property</td>
+            <td th:text="${invoice.property}">Property</td>
+            <td class="label">Work Completed</td>
+            <td th:text="${invoice.dateWorkCompleted}">Date Work Completed</td>
+        </tr>
+        <tr>
+            <td class="label">Services</td>
+            <td th:text="${invoice.serviceCategories != null ? #strings.listJoin(invoice.serviceCategories, ', ') : ''}">Services</td>
+            <td class="label">Payment Due</td>
+            <td th:text="${invoice.paymentDue}">Payment Due</td>
+        </tr>
+    </table>
+
+    <div class="section-title">Project Description</div>
+    <div class="description" th:text="${invoice.projectDescription}">Project description</div>
+
+    <div class="section-title">Cost Breakdown</div>
+    <table class="items">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th class="amount">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Labor</td>
+                <td class="amount" th:text="${invoice.laborExpense}">Labor</td>
+            </tr>
+            <tr>
+                <td>Equipment</td>
+                <td class="amount" th:text="${invoice.equipmentExpense}">Equipment</td>
+            </tr>
+            <tr>
+                <td>Materials</td>
+                <td class="amount" th:text="${invoice.materialsExpense}">Materials</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="totals">
+        <tr>
+            <td class="total-label">Total Due</td>
+            <td class="total-value" th:text="${invoice.costToClient}">Cost To Client</td>
+        </tr>
+    </table>
+
+    <div class="notes" th:if="${invoice.administrativeNotes != null and !invoice.administrativeNotes.isBlank()}"
+         th:text="${invoice.administrativeNotes}">Administrative notes</div>
+</body>
+</html>
