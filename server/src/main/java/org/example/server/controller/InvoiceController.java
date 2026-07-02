@@ -66,16 +66,16 @@ public class InvoiceController {
         invoiceService.updateField(id, update.key(), update.value());
     }
 
-    @GetMapping("/{id}/pdf")
+    @GetMapping("/{invoiceNumber}/pdf")
     @Operation(
             summary = "Generate an invoice PDF",
-            description = "Resolves the invoice for the given id, renders it into an HTML template, "
-                    + "and streams back a generated PDF as an attachment. The PDF is not persisted. "
-                    + "Returns 404 if no invoice has the id.")
-    public ResponseEntity<byte[]> invoicePdf(@PathVariable String id) {
-        InvoiceRecord record = invoiceService.findById(id);
-        byte[] pdf = pdfService.invoicePdf(id);
-        String filename = "invoice-" + PdfFilenames.slug(record.invoiceNumber(), id) + ".pdf";
+            description = "Resolves the invoice for the given invoiceNumber, renders it into an HTML "
+                    + "template, and streams back a generated PDF as an attachment. The PDF is not "
+                    + "persisted. Returns 404 if no invoice has the invoiceNumber.")
+    public ResponseEntity<byte[]> invoicePdf(@PathVariable String invoiceNumber) {
+        InvoiceRecord record = invoiceService.findByInvoiceNumber(invoiceNumber);
+        byte[] pdf = pdfService.invoicePdf(invoiceNumber);
+        String filename = "invoice-" + PdfFilenames.slug(record.invoiceNumber(), record.id()) + ".pdf";
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION,

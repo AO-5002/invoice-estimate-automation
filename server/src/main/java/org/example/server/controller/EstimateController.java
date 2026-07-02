@@ -66,16 +66,16 @@ public class EstimateController {
         estimateService.updateField(id, update.key(), update.value());
     }
 
-    @GetMapping("/{id}/pdf")
+    @GetMapping("/{estimateNumber}/pdf")
     @Operation(
             summary = "Generate an estimate PDF",
-            description = "Resolves the estimate for the given id, renders it into an HTML template, "
-                    + "and streams back a generated PDF as an attachment. The PDF is not persisted. "
-                    + "Returns 404 if no estimate has the id.")
-    public ResponseEntity<byte[]> estimatePdf(@PathVariable String id) {
-        EstimateRecord record = estimateService.findById(id);
-        byte[] pdf = pdfService.estimatePdf(id);
-        String filename = "estimate-" + PdfFilenames.slug(record.estimateNumber(), id) + ".pdf";
+            description = "Resolves the estimate for the given estimateNumber, renders it into an HTML "
+                    + "template, and streams back a generated PDF as an attachment. The PDF is not "
+                    + "persisted. Returns 404 if no estimate has the estimateNumber.")
+    public ResponseEntity<byte[]> estimatePdf(@PathVariable String estimateNumber) {
+        EstimateRecord record = estimateService.findByEstimateNumber(estimateNumber);
+        byte[] pdf = pdfService.estimatePdf(estimateNumber);
+        String filename = "estimate-" + PdfFilenames.slug(record.estimateNumber(), record.id()) + ".pdf";
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION,

@@ -7,6 +7,7 @@ import RecordTable, { type Column } from "./RecordTable";
 import type { SortSpec, SortField } from "./ActionsBar";
 import { compareDates, formatCurrency, parseCurrencyAmount } from "../lib/format";
 import { patchJSON } from "../lib/fetcher";
+import { buildPdfFilename } from "../lib/download";
 
 export const INVOICE_COLUMNS: Column<InvoiceRecord>[] = [
   { key: "id", label: "ID" },
@@ -143,7 +144,19 @@ export default function InvoiceView({
         locked={locked}
         identifierKey="id"
         onCellEdit={updateRecord}
-        pdfPath={(id) => `/api/invoices/${id}/pdf`}
+        pdfDownload={(invoice) => {
+          // The PDF endpoint keys off invoiceNumber, so without it there's
+          // nothing to request — signal `null` to disable the row button.
+          if (!invoice.invoiceNumber) return null;
+          return {
+            url: `/api/invoices/${encodeURIComponent(invoice.invoiceNumber)}/pdf`,
+            filename: buildPdfFilename(
+              invoice.client,
+              "INVOICE",
+              invoice.invoiceNumber,
+            ),
+          };
+        }}
       />
       {editError && (
         <div

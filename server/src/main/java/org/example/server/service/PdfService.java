@@ -12,10 +12,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 
 /**
- * Renders a single invoice/estimate record into a print-ready PDF: resolves the record by id
- * (reusing the cached services), fills the matching Thymeleaf template, then converts that HTML to
- * PDF bytes with openhtmltopdf. The bytes are streamed straight back to the caller — nothing is
- * persisted (object storage comes later).
+ * Renders a single invoice/estimate record into a print-ready PDF: resolves the record by its
+ * human-facing number (reusing the cached services), fills the matching Thymeleaf template, then
+ * converts that HTML to PDF bytes with openhtmltopdf. The bytes are streamed straight back to the
+ * caller — nothing is persisted (object storage comes later).
  */
 @Service
 public class PdfService {
@@ -34,22 +34,22 @@ public class PdfService {
     }
 
     /**
-     * Builds the PDF for the invoice identified by {@code id}.
+     * Builds the PDF for the invoice identified by {@code invoiceNumber}.
      *
-     * @throws InvoiceNotFoundException if no invoice has the given id.
+     * @throws InvoiceNotFoundException if no invoice has the given invoiceNumber.
      */
-    public byte[] invoicePdf(String id) {
-        InvoiceRecord record = invoiceService.findById(id);
+    public byte[] invoicePdf(String invoiceNumber) {
+        InvoiceRecord record = invoiceService.findByInvoiceNumber(invoiceNumber);
         return toPdf(render("invoice", "invoice", record));
     }
 
     /**
-     * Builds the PDF for the estimate identified by {@code id}.
+     * Builds the PDF for the estimate identified by {@code estimateNumber}.
      *
-     * @throws EstimateNotFoundException if no estimate has the given id.
+     * @throws EstimateNotFoundException if no estimate has the given estimateNumber.
      */
-    public byte[] estimatePdf(String id) {
-        EstimateRecord record = estimateService.findById(id);
+    public byte[] estimatePdf(String estimateNumber) {
+        EstimateRecord record = estimateService.findByEstimateNumber(estimateNumber);
         return toPdf(render("estimate", "estimate", record));
     }
 

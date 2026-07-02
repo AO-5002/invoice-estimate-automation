@@ -35,16 +35,20 @@ public class InvoiceService extends CachingSheetService<InvoiceRecord> {
     }
 
     /**
-     * Resolves the full invoice record for {@code id} from the cached list (same source the list
-     * endpoint serves), for read-only consumers such as PDF generation.
+     * Resolves the full invoice record for {@code invoiceNumber} from the cached list (same source
+     * the list endpoint serves), for read-only consumers such as PDF generation. Matches on the
+     * human-facing invoice-number column, not the internal row id.
      *
-     * @throws InvoiceNotFoundException if no row has the given {@code id}.
+     * <p>NOTE: unlike the server-owned {@code id}, {@code invoiceNumber} is not guaranteed unique; if
+     * two rows share it, the first match (by the cached sort order) wins.
+     *
+     * @throws InvoiceNotFoundException if no row has the given {@code invoiceNumber}.
      */
-    public InvoiceRecord findById(String id) {
+    public InvoiceRecord findByInvoiceNumber(String invoiceNumber) {
         return get().stream()
-                .filter(record -> record.id().equals(id))
+                .filter(record -> invoiceNumber.equals(record.invoiceNumber()))
                 .findFirst()
-                .orElseThrow(() -> new InvoiceNotFoundException(id));
+                .orElseThrow(() -> new InvoiceNotFoundException(invoiceNumber));
     }
 
     /**

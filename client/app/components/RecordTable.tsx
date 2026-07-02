@@ -1,15 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  Copy,
-  Loader2,
-} from "lucide-react";
-import Modal from "./Modal";
-import { fetchBlob } from "../lib/fetcher";
+import { ChevronLeft, ChevronRight, FileText, Loader2 } from "lucide-react";
+import { downloadFile } from "../lib/download";
 
 const PAGE_SIZE = 10;
 
@@ -18,6 +11,12 @@ export interface Column<T> {
   label: string;
   format?: (value: T[keyof T], record: T) => string;
   editable?: "text" | "number" | "date";
+}
+
+/** A per-row PDF download target: the endpoint to fetch and the filename to save it as. */
+export interface PdfDownload {
+  url: string;
+  filename: string;
 }
 
 function defaultFormat(value: unknown): string {
@@ -36,7 +35,7 @@ export default function RecordTable<T extends object>({
   locked = true,
   identifierKey,
   onCellEdit,
-  pdfPath,
+  pdfDownload,
 }: {
   columns: Column<T>[];
   data: T[];
@@ -51,12 +50,14 @@ export default function RecordTable<T extends object>({
     columnKey: string,
     value: string,
   ) => void;
-  /** Builds the PDF endpoint for a given row id. When provided, a hover
-   *  action to generate a PDF is rendered in a left gutter column. */
-  pdfPath?: (id: string) => string;
+  /**
+   * Resolves the PDF download target for a row. Return `null` to disable the
+   * button (e.g. the row is missing the number the endpoint keys off). When
+   * provided, a PDF action is rendered in a left gutter column.
+   */
+  pdfDownload?: (record: T) => PdfDownload | null;
 }) {
-  // The gutter icon needs both a way to build the endpoint and a row id.
-  const showGutter = !!pdfPath && !!identifierKey;
+  const showGutter = !!pdfDownload;
   const [page, setPage] = useState(0);
   const prevLengthRef = useRef(data.length);
   useEffect(() => {
@@ -75,78 +76,45 @@ export default function RecordTable<T extends object>({
   const [editValue, setEditValue] = useState("");
   const cancelledRef = useRef(false);
 
-  const [contextMenu, setContextMenu] = useState<{
-    x: number;
-    y: number;
-    id: string | null;
-  } | null>(null);
-  const contextMenuRef = useRef<HTMLDivElement>(null);
-
-  // Transient bottom toast, reused for the "coming soon" stub and PDF errors.
+  // Transient bottom toast, used to surface PDF generation errors.
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // The row id whose "Generate PDF?" confirm dialog is open, and whether the
-  // PDF request is currently in flight.
-  const [pdfTarget, setPdfTarget] = useState<string | null>(null);
-  const [pdfLoading, setPdfLoading] = useState(false);
+  // Row keys with an in-flight PDF download, so each row's icon can show a
+  // spinner and be disabled independently without blocking the other rows.
+  const [pdfBusy, setPdfBusy] = useState<Set<string>>(new Set());
 
   if (locked && editingCell !== null) setEditingCell(null);
-  if (locked && contextMenu !== null) setContextMenu(null);
-
-  useEffect(() => {
-    if (!contextMenu) return;
-    function handleClick(e: MouseEvent) {
-      if (contextMenuRef.current?.contains(e.target as Node)) return;
-      setContextMenu(null);
-    }
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setContextMenu(null);
-    }
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [contextMenu]);
 
   function showToast(message: string) {
     setToast(message);
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 2000);
+    toastTimer.current = setTimeout(() => setToast(null), 2500);
   }
 
-  function showComingSoon() {
-    showToast("Coming soon");
-  }
-
-  function handleMenuAction() {
-    setContextMenu(null);
-    showComingSoon();
-  }
-
-  function openPdfConfirm(id: string) {
-    setContextMenu(null);
-    setPdfTarget(id);
-  }
-
-  async function handleGeneratePdf() {
-    if (!pdfPath || pdfTarget == null) return;
-    setPdfLoading(true);
+  /** Fetches the row's PDF and saves it to disk, tracking loading per row key. */
+  async function handleDownloadPdf(rowKey: string, pdf: PdfDownload) {
+    if (pdfBusy.has(rowKey)) return;
+    setPdfBusy((prev) => new Set(prev).add(rowKey));
     try {
-      const blob = await fetchBlob(pdfPath(pdfTarget));
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener,noreferrer");
-      setPdfTarget(null);
+      await downloadFile(pdf.url, pdf.filename);
     } catch {
       showToast("Failed to generate PDF. Please try again.");
     } finally {
-      setPdfLoading(false);
+      setPdfBusy((prev) => {
+        const next = new Set(prev);
+        next.delete(rowKey);
+        return next;
+      });
     }
   }
 
   const canEdit = !locked && !!onCellEdit && !!identifierKey;
+
+  function rowKeyOf(record: T, pageIndex: number, pdf: PdfDownload | null): string {
+    if (identifierKey) return String(record[identifierKey as keyof T]);
+    return pdf?.url ?? String(page * PAGE_SIZE + pageIndex);
+  }
 
   function startEdit(rowIndex: number, col: Column<T>, record: T) {
     if (!canEdit || !col.editable) return;
@@ -252,76 +220,89 @@ export default function RecordTable<T extends object>({
           </thead>
           <tbody>
             {pageData.map((record, i) => {
-              const rowId = identifierKey
-                ? String(record[identifierKey as keyof T])
-                : null;
+              const pdf = pdfDownload ? pdfDownload(record) : null;
+              const rowKey = rowKeyOf(record, i, pdf);
+              const busy = pdfBusy.has(rowKey);
               return (
-              <tr
-                key={i}
-                className="group border-b border-[#313131]/50 transition-colors hover:bg-[#1e1e1e]"
-                onContextMenu={(e) => {
-                  if (locked) return;
-                  e.preventDefault();
-                  setContextMenu({ x: e.clientX, y: e.clientY, id: rowId });
-                }}
-              >
-                {showGutter && (
-                  <td className="w-10 px-2 py-3 align-middle">
-                    <button
-                      type="button"
-                      onClick={() => rowId && openPdfConfirm(rowId)}
-                      aria-label="Generate PDF"
-                      className="flex items-center justify-center text-[#989898] opacity-0 transition group-hover:opacity-100 hover:text-[#7987FF]"
-                    >
-                      <FileText className="size-4" />
-                    </button>
-                  </td>
-                )}
-                {columns.map((col) => (
-                  <td
-                    key={col.key}
-                    className="px-4 py-3 text-[13px] text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
-                  >
-                    {editingCell?.row === i &&
-                    editingCell?.col === col.key ? (
-                      <input
-                        autoFocus
-                        type={col.editable}
-                        step={col.editable === "number" ? "0.01" : undefined}
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            (e.target as HTMLInputElement).blur();
-                          }
-                          if (e.key === "Escape") {
-                            e.stopPropagation();
-                            cancelledRef.current = true;
-                            (e.target as HTMLInputElement).blur();
-                          }
-                        }}
-                        onBlur={handleEditBlur}
-                        className="w-full bg-[#1e1e1e] border border-[#7987FF] rounded px-1 py-0.5 text-[13px] text-white outline-none"
-                      />
-                    ) : (
-                      <span
-                        onClick={
-                          canEdit && col.editable
-                            ? () => startEdit(i, col, record)
-                            : undefined
+                <tr
+                  key={i}
+                  className="border-b border-[#313131]/50 transition-colors hover:bg-[#1e1e1e]"
+                >
+                  {showGutter && (
+                    <td className="w-10 px-2 py-3 align-middle">
+                      <button
+                        type="button"
+                        onClick={() => pdf && handleDownloadPdf(rowKey, pdf)}
+                        disabled={!pdf || busy}
+                        aria-label={
+                          pdf
+                            ? `Download PDF (${pdf.filename})`
+                            : "PDF unavailable — this row has no number"
                         }
-                        className={
-                          canEdit && col.editable ? "cursor-text" : ""
+                        title={
+                          pdf
+                            ? "Download PDF"
+                            : "This row has no number to generate a PDF"
                         }
+                        className={`flex items-center justify-center transition-colors disabled:cursor-not-allowed ${
+                          pdf
+                            ? "text-[#989898] hover:text-[#7987FF]"
+                            : "text-[#5a5a5a]"
+                        }`}
                       >
-                        {col.format
-                          ? col.format(record[col.key], record)
-                          : defaultFormat(record[col.key])}
-                      </span>
-                    )}
-                  </td>
-                ))}
-              </tr>
+                        {busy ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <FileText className="size-4" />
+                        )}
+                      </button>
+                    </td>
+                  )}
+                  {columns.map((col) => (
+                    <td
+                      key={col.key}
+                      className="px-4 py-3 text-[13px] text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
+                    >
+                      {editingCell?.row === i &&
+                      editingCell?.col === col.key ? (
+                        <input
+                          autoFocus
+                          type={col.editable}
+                          step={col.editable === "number" ? "0.01" : undefined}
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              (e.target as HTMLInputElement).blur();
+                            }
+                            if (e.key === "Escape") {
+                              e.stopPropagation();
+                              cancelledRef.current = true;
+                              (e.target as HTMLInputElement).blur();
+                            }
+                          }}
+                          onBlur={handleEditBlur}
+                          className="w-full bg-[#1e1e1e] border border-[#7987FF] rounded px-1 py-0.5 text-[13px] text-white outline-none"
+                        />
+                      ) : (
+                        <span
+                          onClick={
+                            canEdit && col.editable
+                              ? () => startEdit(i, col, record)
+                              : undefined
+                          }
+                          className={
+                            canEdit && col.editable ? "cursor-text" : ""
+                          }
+                        >
+                          {col.format
+                            ? col.format(record[col.key], record)
+                            : defaultFormat(record[col.key])}
+                        </span>
+                      )}
+                    </td>
+                  ))}
+                </tr>
               );
             })}
           </tbody>
@@ -352,72 +333,11 @@ export default function RecordTable<T extends object>({
         </div>
       )}
 
-      {contextMenu && (
-        <div
-          ref={contextMenuRef}
-          className="fixed z-50 min-w-[160px] rounded-[8px] border border-[#313131] bg-[#232323] py-1 shadow-lg"
-          style={{
-            left: Math.min(contextMenu.x, window.innerWidth - 180),
-            top: Math.min(contextMenu.y, window.innerHeight - 130),
-          }}
-        >
-          <button
-            onClick={() => {
-              if (showGutter && contextMenu.id) {
-                openPdfConfirm(contextMenu.id);
-              } else {
-                handleMenuAction();
-              }
-            }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-white/70 transition-colors hover:bg-[#1e1e1e] hover:text-white"
-          >
-            <FileText className="size-3.5" />
-            Generate PDF
-          </button>
-          <button
-            onClick={handleMenuAction}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-white/70 transition-colors hover:bg-[#1e1e1e] hover:text-white"
-          >
-            <Copy className="size-3.5" />
-            Duplicate
-          </button>
-        </div>
-      )}
-
       {toast && (
         <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 rounded-[8px] border border-[#313131] bg-[#232323] px-4 py-2 text-[13px] text-[#989898] shadow-lg">
           {toast}
         </div>
       )}
-
-      <Modal
-        open={pdfTarget !== null}
-        onClose={() => {
-          if (!pdfLoading) setPdfTarget(null);
-        }}
-        title="Generate PDF"
-      >
-        <p className="text-[14px] leading-[20px] text-[#c9c9c9]">
-          Generate a PDF for this row?
-        </p>
-        <div className="mt-6 flex justify-end gap-3">
-          <button
-            onClick={() => setPdfTarget(null)}
-            disabled={pdfLoading}
-            className="rounded-[8px] border border-[#313131] px-4 py-2 text-[13px] text-[#989898] transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleGeneratePdf}
-            disabled={pdfLoading}
-            className="flex items-center gap-2 rounded-[8px] bg-[#7987FF] px-4 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {pdfLoading && <Loader2 className="size-4 animate-spin" />}
-            {pdfLoading ? "Generating…" : "Confirm"}
-          </button>
-        </div>
-      </Modal>
     </div>
   );
 }

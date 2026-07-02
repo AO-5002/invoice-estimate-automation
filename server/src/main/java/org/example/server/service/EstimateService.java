@@ -35,16 +35,20 @@ public class EstimateService extends CachingSheetService<EstimateRecord> {
     }
 
     /**
-     * Resolves the full estimate record for {@code id} from the cached list (same source the list
-     * endpoint serves), for read-only consumers such as PDF generation.
+     * Resolves the full estimate record for {@code estimateNumber} from the cached list (same source
+     * the list endpoint serves), for read-only consumers such as PDF generation. Matches on the
+     * human-facing estimate-number column, not the internal row id.
      *
-     * @throws EstimateNotFoundException if no row has the given {@code id}.
+     * <p>NOTE: unlike the server-owned {@code id}, {@code estimateNumber} is not guaranteed unique;
+     * if two rows share it, the first match (by the cached sort order) wins.
+     *
+     * @throws EstimateNotFoundException if no row has the given {@code estimateNumber}.
      */
-    public EstimateRecord findById(String id) {
+    public EstimateRecord findByEstimateNumber(String estimateNumber) {
         return get().stream()
-                .filter(record -> record.id().equals(id))
+                .filter(record -> estimateNumber.equals(record.estimateNumber()))
                 .findFirst()
-                .orElseThrow(() -> new EstimateNotFoundException(id));
+                .orElseThrow(() -> new EstimateNotFoundException(estimateNumber));
     }
 
     /**

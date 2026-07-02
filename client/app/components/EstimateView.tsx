@@ -7,6 +7,7 @@ import RecordTable, { type Column } from "./RecordTable";
 import type { SortSpec, SortField } from "./ActionsBar";
 import { compareDates, formatCurrency, parseCurrencyAmount } from "../lib/format";
 import { patchJSON } from "../lib/fetcher";
+import { buildPdfFilename } from "../lib/download";
 
 export const ESTIMATE_COLUMNS: Column<EstimateRecord>[] = [
   { key: "id", label: "ID" },
@@ -141,7 +142,19 @@ export default function EstimateView({
         locked={locked}
         identifierKey="id"
         onCellEdit={updateRecord}
-        pdfPath={(id) => `/api/estimates/${id}/pdf`}
+        pdfDownload={(estimate) => {
+          // The PDF endpoint keys off estimateNumber, so without it there's
+          // nothing to request — signal `null` to disable the row button.
+          if (!estimate.estimateNumber) return null;
+          return {
+            url: `/api/estimates/${encodeURIComponent(estimate.estimateNumber)}/pdf`,
+            filename: buildPdfFilename(
+              estimate.client,
+              "ESTIMATE",
+              estimate.estimateNumber,
+            ),
+          };
+        }}
       />
       {editError && (
         <div
