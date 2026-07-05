@@ -345,6 +345,71 @@ function Field({
   );
 }
 
+/**
+ * Project Description field with an "Improve with AI" affordance. UI only — the
+ * button surfaces an inline confirmation asking whether AI should improve the
+ * description; confirming or dismissing is currently a no-op (no request is made).
+ */
+function ProjectDescriptionField({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+}) {
+  const [confirming, setConfirming] = useState(false);
+
+  return (
+    <div>
+      <Field label="Project Description" required>
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          rows={3}
+          className={inputClass + " resize-none"}
+          required
+        />
+      </Field>
+      {confirming ? (
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-[8px] border border-[#313131] bg-[#1e1e1e] px-3 py-2">
+          <span className="flex items-center gap-1.5 text-[12px] text-[#989898]">
+            <Bot className="size-3.5 text-[#7987FF]" />
+            Let AI clean up this description?
+          </span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="rounded-[6px] bg-[#7987FF] px-3 py-1 text-[12px] font-medium text-white transition-opacity hover:opacity-90"
+            >
+              Improve
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="text-[12px] text-[#989898] transition-colors hover:text-white"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          className="mt-2 flex items-center gap-1.5 rounded-[8px] border border-[#313131] bg-[#1e1e1e] px-3 py-1.5 text-[12px] font-medium text-[#989898] transition-colors hover:border-[#7987FF] hover:text-white"
+        >
+          <Bot className="size-3.5" />
+          Improve with AI
+        </button>
+      )}
+    </div>
+  );
+}
+
 function InvoiceForm({
   form,
   onChange,
@@ -520,16 +585,11 @@ function InvoiceForm({
         />
       </Field>
 
-      <Field label="Project Description" required>
-        <textarea
-          value={form.projectDescription}
-          onChange={(e) => set("projectDescription", e.target.value)}
-          placeholder="Describe the work performed..."
-          rows={3}
-          className={inputClass + " resize-none"}
-          required
-        />
-      </Field>
+      <ProjectDescriptionField
+        value={form.projectDescription}
+        onChange={(v) => set("projectDescription", v)}
+        placeholder="Describe the work performed..."
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Cost to the Client" required>
@@ -799,16 +859,11 @@ function EstimateForm({
         />
       </Field>
 
-      <Field label="Project Description" required>
-        <textarea
-          value={form.projectDescription}
-          onChange={(e) => set("projectDescription", e.target.value)}
-          placeholder="Describe the work to be performed..."
-          rows={3}
-          className={inputClass + " resize-none"}
-          required
-        />
-      </Field>
+      <ProjectDescriptionField
+        value={form.projectDescription}
+        onChange={(v) => set("projectDescription", v)}
+        placeholder="Describe the work to be performed..."
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Cost to the Client" required>
