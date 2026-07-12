@@ -434,9 +434,21 @@ function InvoiceForm({
 
   function handleClientSelection(value: string) {
     if (value === "__other__") {
-      onChange({ ...form, clientSelection: "__other__", client: "", email: "" });
+      onChange({
+        ...form,
+        clientSelection: "__other__",
+        client: "",
+        email: "",
+        property: "",
+      });
     } else if (value === "") {
-      onChange({ ...form, clientSelection: "", client: "", email: "" });
+      onChange({
+        ...form,
+        clientSelection: "",
+        client: "",
+        email: "",
+        property: "",
+      });
     } else {
       const match = KNOWN_CLIENTS.find((c) => c.name === value);
       onChange({
@@ -444,12 +456,14 @@ function InvoiceForm({
         clientSelection: value,
         client: value,
         email: match?.email ?? "",
+        property: match?.property ?? "",
       });
     }
   }
 
   const canSubmit =
     form.invoiceDate &&
+    form.invoiceNumber &&
     form.client &&
     form.projectDescription &&
     form.costToClient &&
@@ -515,13 +529,14 @@ function InvoiceForm({
             className={inputClass}
           />
         </Field>
-        <Field label="Invoice #">
+        <Field label="Invoice #" required>
           <input
             type="text"
             value={form.invoiceNumber}
             onChange={(e) => set("invoiceNumber", e.target.value)}
             placeholder="e.g. INV-001"
             className={inputClass}
+            required
           />
         </Field>
       </div>
@@ -748,9 +763,21 @@ function EstimateForm({
 
   function handleClientSelection(value: string) {
     if (value === "__other__") {
-      onChange({ ...form, clientSelection: "__other__", client: "", email: "" });
+      onChange({
+        ...form,
+        clientSelection: "__other__",
+        client: "",
+        email: "",
+        property: "",
+      });
     } else if (value === "") {
-      onChange({ ...form, clientSelection: "", client: "", email: "" });
+      onChange({
+        ...form,
+        clientSelection: "",
+        client: "",
+        email: "",
+        property: "",
+      });
     } else {
       const match = KNOWN_CLIENTS.find((c) => c.name === value);
       onChange({
@@ -758,6 +785,7 @@ function EstimateForm({
         clientSelection: value,
         client: value,
         email: match?.email ?? "",
+        property: match?.property ?? "",
       });
     }
   }

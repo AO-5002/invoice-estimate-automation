@@ -1,6 +1,7 @@
 package org.example.server.service;
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import org.example.server.config.ClientRegistry;
 import org.example.server.dto.EstimateRecord;
 import org.example.server.dto.InvoiceRecord;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import org.thymeleaf.context.Context;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Optional;
 
 /**
  * Renders a single invoice/estimate record into a print-ready PDF: resolves the record by its
@@ -40,7 +42,7 @@ public class PdfService {
      */
     public byte[] invoicePdf(String invoiceNumber) {
         InvoiceRecord record = invoiceService.findByInvoiceNumber(invoiceNumber);
-        return toPdf(render("invoice", "invoice", record));
+        return toPdf(renderInvoice(record));
     }
 
     /**
@@ -50,14 +52,43 @@ public class PdfService {
      */
     public byte[] estimatePdf(String estimateNumber) {
         EstimateRecord record = estimateService.findByEstimateNumber(estimateNumber);
-        return toPdf(render("estimate", "estimate", record));
+        return toPdf(renderEstimate(record));
     }
 
-    /** Renders the classpath template {@code templates/<template>.html} with the record bound as {@code variable}. */
-    private String render(String template, String variable, Object record) {
+    /**
+     * Renders the invoice template. On top of the record itself, resolves the "Invoice To"
+     * contact block from {@link ClientRegistry}: a preconfigured client gets its registry
+     * email/address; an unknown (one-off) client falls back to the row's {@code property} with an
+     * empty email — the template omits the email line entirely. Render-time only: the record, the
+     * sheet, and the API response are never touched (email is deliberately absent from
+     * {@link InvoiceRecord}).
+     */
+    private String renderInvoice(InvoiceRecord record) {
         Context context = new Context();
-        context.setVariable(variable, record);
-        return templateEngine.process(template, context);
+        context.setVariable("invoice", record);
+        Optional<ClientRegistry.KnownClient> known = ClientRegistry.findByName(record.client());
+        context.setVariable("clientEmail",
+                known.map(ClientRegistry.KnownClient::email).orElse(""));
+        context.setVariable("clientAddress",
+                known.map(ClientRegistry.KnownClient::property).orElse(record.property()));
+        return templateEngine.process("invoice", context);
+    }
+
+    /**
+     * Renders the estimate template. Same contract as {@link #renderInvoice(InvoiceRecord)}:
+     * resolves the "Estimate To" contact block from {@link ClientRegistry}, falling back to the
+     * row's {@code property} and an empty email for unknown (one-off) clients. Render-time only —
+     * email is deliberately absent from {@link EstimateRecord}.
+     */
+    private String renderEstimate(EstimateRecord record) {
+        Context context = new Context();
+        context.setVariable("estimate", record);
+        Optional<ClientRegistry.KnownClient> known = ClientRegistry.findByName(record.client());
+        context.setVariable("clientEmail",
+                known.map(ClientRegistry.KnownClient::email).orElse(""));
+        context.setVariable("clientAddress",
+                known.map(ClientRegistry.KnownClient::property).orElse(record.property()));
+        return templateEngine.process("estimate", context);
     }
 
     /**
