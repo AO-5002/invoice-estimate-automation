@@ -11,6 +11,7 @@ import org.thymeleaf.context.Context;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URL;
 import java.util.Optional;
 
 /**
@@ -21,6 +22,14 @@ import java.util.Optional;
  */
 @Service
 public class PdfService {
+
+    /**
+     * Base URI handed to openhtmltopdf so relative resource references inside the templates (e.g.
+     * the {@code ../docs/services_ortiz_logo.png} logo) resolve against the classpath. Points at the
+     * {@code /templates/} directory, so {@code ../docs/...} lands on {@code /docs/...}; the same URL
+     * resolution works whether the app runs exploded ({@code file:}) or packaged ({@code jar:}).
+     */
+    private static final String TEMPLATE_BASE_URI = resolveTemplateBaseUri();
 
     private final InvoiceService invoiceService;
     private final EstimateService estimateService;
@@ -92,19 +101,29 @@ public class PdfService {
     }
 
     /**
-     * Converts a well-formed XHTML string to PDF bytes. No base URI is configured — the templates
-     * are fully self-contained (all CSS inline, no external images or stylesheets).
+     * Converts a well-formed XHTML string to PDF bytes. All CSS is inline, but the templates pull
+     * the company logo from the classpath ({@code ../docs/services_ortiz_logo.png}), so the
+     * {@link #TEMPLATE_BASE_URI} is supplied to let openhtmltopdf resolve that relative reference.
      */
     private byte[] toPdf(String html) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
-            builder.withHtmlContent(html, null);
+            builder.withHtmlContent(html, TEMPLATE_BASE_URI);
             builder.toStream(out);
             builder.run();
             return out.toByteArray();
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to generate PDF.", e);
         }
+    }
+
+    private static String resolveTemplateBaseUri() {
+        URL templates = PdfService.class.getResource("/templates/");
+        if (templates == null) {
+            throw new IllegalStateException(
+                    "Could not locate /templates/ on the classpath for PDF base URI resolution.");
+        }
+        return templates.toString();
     }
 }
