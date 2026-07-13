@@ -30,24 +30,35 @@ export function parseAmount(value: unknown): number {
 }
 
 /**
- * Record date -> local-midnight Date. Handles the API's US M/D/YYYY strings
- * and ISO YYYY-MM-DD. Both are constructed as local dates on purpose:
- * new Date("YYYY-MM-DD") parses as UTC midnight, which shifts the record into
- * the previous day (and the wrong bucket) in timezones behind UTC. Returns
- * null for blank/unparseable input so callers can skip the record.
+ * Record date -> local-midnight Date. Handles ISO YYYY-MM-DD (with or without a
+ * trailing time component, which is ignored) and the API's US M/D/YYYY strings.
+ *
+ * Dates are always constructed LOCALLY (never `new Date("YYYY-MM-DD")`, which
+ * parses as UTC midnight). This is load-bearing: the window boundaries in
+ * bucketSpecFor are local, so records must share that basis. A UTC-parsed date
+ * shifts back a day in timezones behind UTC, pushing a record just outside a
+ * narrow week/month window — a mismatch a full-year window silently hides.
+ *
+ * Only the date portion is read even when a time is present, so a record that
+ * arrives as "2026-07-12T00:00:00Z" still lands on the correct local day (and in
+ * the current week/month bucket) instead of being dropped. Returns null for
+ * blank/unrecognized input so callers can skip the record.
  */
 export function parseRecordDate(value: unknown): Date | null {
   if (value == null) return null;
   const s = String(value).trim();
+  if (s === "") return null;
 
+  // ISO YYYY-MM-DD, optionally followed by "T…" / whitespace + a time.
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s]|$)/);
+  if (iso) {
+    return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+  }
+
+  // US M/D/YYYY (single- or double-digit month/day).
   const us = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (us) {
     return new Date(Number(us[3]), Number(us[1]) - 1, Number(us[2]));
-  }
-
-  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (iso) {
-    return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
   }
 
   return null;

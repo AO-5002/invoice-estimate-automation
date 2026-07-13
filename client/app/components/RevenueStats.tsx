@@ -21,8 +21,11 @@ import {
 // logic below are generic over StatDef, so entries are pure config.
 // ---------------------------------------------------------------------------
 
+// An invoice counts as paid only when its Payment Status is "COMPLETE"
+// (case/whitespace-insensitive). Everything else — PENDING, blank, etc. — is
+// outstanding.
 const isPaid = (r: InvoiceRecord) =>
-  (r.paymentStatus ?? "").trim().toUpperCase() === "PAID";
+  (r.paymentStatus ?? "").trim().toUpperCase() === "COMPLETE";
 
 const invoiceAmount = (r: InvoiceRecord) => parseAmount(r.costToClient);
 // There is no paid-date field on invoices, so paid revenue is bucketed by

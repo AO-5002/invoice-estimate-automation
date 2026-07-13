@@ -456,7 +456,9 @@ function InvoiceForm({
         clientSelection: value,
         client: value,
         email: match?.email ?? "",
-        property: match?.property ?? "",
+        // Property is a custom-client-only fallback: the server registry supplies
+        // a known client's address at render time, so leave it empty here.
+        property: "",
       });
     }
   }
@@ -565,9 +567,20 @@ function InvoiceForm({
             type="text"
             value={form.property}
             onChange={(e) => set("property", e.target.value)}
-            placeholder="Property address"
-            className={inputClass}
+            placeholder={
+              isKnownClient ? "From client's saved profile" : "Property address"
+            }
+            readOnly={isKnownClient}
+            className={
+              inputClass +
+              (isKnownClient ? " opacity-60 cursor-not-allowed" : "")
+            }
           />
+          {isKnownClient && (
+            <span className="mt-1 block text-[11px] text-[#989898]">
+              Address comes from this client&apos;s saved profile.
+            </span>
+          )}
         </Field>
       </div>
 
@@ -785,7 +798,9 @@ function EstimateForm({
         clientSelection: value,
         client: value,
         email: match?.email ?? "",
-        property: match?.property ?? "",
+        // Property is a custom-client-only fallback: the server registry supplies
+        // a known client's address at render time, so leave it empty here.
+        property: "",
       });
     }
   }
@@ -852,9 +867,22 @@ function EstimateForm({
             type="text"
             value={form.property}
             onChange={(e) => set("property", e.target.value)}
-            placeholder="e.g. mobile home, house direction"
-            className={inputClass}
+            placeholder={
+              isKnownClient
+                ? "From client's saved profile"
+                : "e.g. mobile home, house direction"
+            }
+            readOnly={isKnownClient}
+            className={
+              inputClass +
+              (isKnownClient ? " opacity-60 cursor-not-allowed" : "")
+            }
           />
+          {isKnownClient && (
+            <span className="mt-1 block text-[11px] text-[#989898]">
+              Address comes from this client&apos;s saved profile.
+            </span>
+          )}
         </Field>
       </div>
 
