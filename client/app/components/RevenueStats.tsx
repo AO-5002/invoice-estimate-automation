@@ -206,6 +206,8 @@ export default function RevenueStats({ title = "Revenue" }: { title?: string }) 
   const slotWidth = CHART_WIDTH / result.buckets.length;
   const barWidth = Math.min(slotWidth * 0.6, 48);
   // Months have up to 31 daily bars — label every 7th day to avoid collisions.
+  // Every other period (incl. "All Time" year labels) is sparse enough to label
+  // every bar, so only "This Month" thins its labels.
   const showXLabel = (i: number) =>
     period !== "This Month" || i % 7 === 0 || i === result.labels.length - 1;
 
